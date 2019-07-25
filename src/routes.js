@@ -16,6 +16,8 @@ import CadastrarItensLoja from "views/ItensLoja/Cadastrar/CadastrarItensLoja.jsx
 import ListarDesafios from "views/Desafio/Listar/ListarDesafios.jsx";
 import CadastrarDesafios from "views/Desafio/Cadastrar/CadastrarDesafios.jsx";
 
+import ListarComanda from "views/Comanda/Listar/ListarComanda.jsx";
+
 import Teste from "views/Testes/Teste.jsx";
 
 const dashboardRoutes = [
@@ -28,10 +30,10 @@ const dashboardRoutes = [
     hidden: false
   },
   {
-    path: "/comanda",
+    path: "/listar/comanda",
     name: "Comanda",
     icon: ListAlt,
-    component: DashboardPage,
+    component: ListarComanda,
     layout: "/admin",
     hidden: false
   },

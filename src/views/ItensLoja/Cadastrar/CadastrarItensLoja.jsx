@@ -23,12 +23,17 @@ import {
 
 import { ListarProdutos } from "../../../services/api/produto";
 
-import { blackColor } from "assets/jss/material-dashboard-react";
+import {
+  whiteColor,
+  blackColor
+} from "assets/jss/material-dashboard-react.jsx";
 
 const useStyles = makeStyles(theme => ({
   container: {
     display: "flex",
-    flexWrap: "wrap"
+    flexWrap: "wrap",
+    background: whiteColor,
+    padding: theme.spacing(2)
   },
   leftIcon: {
     marginRight: theme.spacing(1)
@@ -219,8 +224,8 @@ export default function TextFields({ ...props }) {
             id="nome"
             label="Nome"
             style={{ margin: 8 }}
-            placeholder="Nome do  item na loja"
-            helperText="Nome do  item na loja"
+            placeholder="Nome do item na loja"
+            helperText="Nome do item na loja"
             fullWidth
             margin="normal"
             InputLabelProps={{

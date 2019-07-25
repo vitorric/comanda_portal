@@ -23,7 +23,7 @@ import Grid from "@material-ui/core/Grid";
 import Chip from "@material-ui/core/Chip";
 
 import { Link } from "react-router-dom";
-import { ListarDesafios } from "../../../services/api/desafios";
+import { ListarComandas } from "../../../services/api/comanda";
 
 function desc(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -53,23 +53,23 @@ function getSorting(order, orderBy) {
 
 const headRows = [
   {
-    id: "nome",
+    id: "responsavel",
     numeric: false,
     disablePadding: true,
-    label: "Nome"
+    label: "Responsável"
   },
+  { id: "valorTotal", numeric: false, disablePadding: false, label: "Valor" },
   {
-    id: "emGrupo",
+    id: "createdAt",
     numeric: false,
     disablePadding: false,
-    label: "É em grupo?"
+    label: "Data de Abertura"
   },
-  { id: "premio", numeric: false, disablePadding: false, label: "Prêmio" },
   {
-    id: "tempoDuracao",
+    id: "dataSaida",
     numeric: false,
     disablePadding: false,
-    label: "Disponível até"
+    label: "Data de Fechamento"
   },
   { id: "status", numeric: false, disablePadding: false, label: "Status" },
   { id: "acao", numeric: false, disablePadding: false, label: "Ação" }
@@ -168,11 +168,11 @@ const EnhancedTableToolbar = props => {
       <div className={classes.title}>
         {numSelected > 0 ? (
           <Typography color="inherit" variant="subtitle1">
-            Desafios - {numSelected} selecionados
+            Comanda(s) - {numSelected} selecionada(s)
           </Typography>
         ) : (
           <Typography variant="h6" id="tableTitle">
-            Desafios
+            Comanda
           </Typography>
         )}
       </div>
@@ -212,7 +212,7 @@ const useStyles = makeStyles(theme => ({
 export default function EnhancedTable() {
   const classes = useStyles();
   const [order, setOrder] = React.useState("asc");
-  const [orderBy, setOrderBy] = React.useState("nome");
+  const [orderBy, setOrderBy] = React.useState("responsavel.nome");
   const [selected, setSelected] = React.useState([]);
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
@@ -228,7 +228,7 @@ export default function EnhancedTable() {
 
   useEffect(() => {
     const getData = async () => {
-      const response = await ListarDesafios();
+      const response = await ListarComandas();
       setData(response.data.retorno);
       setDataBackup(response.data.retorno);
       setEmptyRows(response.data.retorno.length);
@@ -239,7 +239,7 @@ export default function EnhancedTable() {
 
   function handleSelectAllClick(event) {
     if (event.target.checked) {
-      const newSelecteds = data.map(n => n.nome);
+      const newSelecteds = data.map(n => n.responsavel.nome);
       setSelected(newSelecteds);
       return;
     }
@@ -282,7 +282,12 @@ export default function EnhancedTable() {
 
     setData(
       dataBackup.filter(item => {
-        return item.nome.toLowerCase().includes(filter.toLowerCase());
+        return (
+          item.responsavel.nome.toLowerCase().includes(filter.toLowerCase()) ||
+          item.createdAt.toLowerCase().includes(filter.toLowerCase()) ||
+          (item.dataSaida !== null &&
+            item.dataSaida.toLowerCase().includes(filter.toLowerCase()))
+        );
       })
     );
   };
@@ -295,10 +300,10 @@ export default function EnhancedTable() {
           <Grid item xs={8}>
             <TextField
               id="busca"
-              label="Buscar desafio"
+              label="Buscar comanda"
               style={{ margin: 8 }}
-              placeholder="Buscar desafio"
-              helperText="Digite o nome do desafio"
+              placeholder="Buscar comanda"
+              helperText="Digite o nome do responsável ou alguma data"
               margin="normal"
               fullWidth
               onChange={searchGrid()}
@@ -308,7 +313,7 @@ export default function EnhancedTable() {
             />
           </Grid>
           <Grid item xs={4}>
-            <Link to={`/admin/cadastrar/desafio`}>
+            <Link to={`/admin/cadastrar/comanda`}>
               <Tooltip title="Adicionar" className={classes.addButton}>
                 <Fab color="primary" size="medium">
                   <AddIcon />
@@ -335,13 +340,15 @@ export default function EnhancedTable() {
               {stableSort(data, getSorting(order, orderBy))
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((dataItem, index) => {
-                  const isItemSelected = isSelected(dataItem.nome);
+                  const isItemSelected = isSelected(dataItem.responsavel.nome);
                   const labelId = `enhanced-table-checkbox-${index}`;
 
                   return (
                     <TableRow
                       hover
-                      onClick={event => handleClick(event, dataItem.nome)}
+                      onClick={event =>
+                        handleClick(event, dataItem.responsavel.nome)
+                      }
                       role="checkbox"
                       aria-checked={isItemSelected}
                       tabIndex={-1}
@@ -360,25 +367,21 @@ export default function EnhancedTable() {
                         scope="row"
                         padding="none"
                       >
-                        {dataItem.nome}
+                        {dataItem.responsavel.nome}
                       </TableCell>
-                      <TableCell>{dataItem.emGrupo ? "Sim" : "Não"}</TableCell>
-                      <TableCell>
-                        {dataItem.premio.produto
-                          ? `${dataItem.premio.quantidade}x - ${dataItem.premio.produto.nome}`
-                          : `${dataItem.premio.quantidade} CPGold`}
-                      </TableCell>
-                      <TableCell>{dataItem.tempoDuracao}</TableCell>
+                      <TableCell>{dataItem.valorTotal}</TableCell>
+                      <TableCell>{dataItem.createdAt}</TableCell>
+                      <TableCell>{dataItem.dataSaida}</TableCell>
                       <TableCell>
                         <Chip
                           color={
                             dataItem.status === 1 ? "primary" : "secondary"
                           }
-                          label={dataItem.status === 1 ? "Ativo" : "Inativo"}
+                          label={dataItem.status === 1 ? "Aberta" : "Fechada"}
                         />
                       </TableCell>
                       <TableCell className={classes.margin}>
-                        <Link to={`/admin/cadastrar/desafio/${dataItem._id}`}>
+                        <Link to={`/admin/cadastrar/comanda/${dataItem._id}`}>
                           <Tooltip title="Editar">
                             <Fab color="primary" size="small">
                               <Icon>edit_icon</Icon>

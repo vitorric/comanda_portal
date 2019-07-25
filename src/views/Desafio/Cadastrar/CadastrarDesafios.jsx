@@ -9,26 +9,49 @@ import FormGroup from "@material-ui/core/FormGroup";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import Button from "@material-ui/core/Button";
 import SaveIcon from "@material-ui/icons/Save";
+import ArrowBack from "@material-ui/icons/ArrowBack";
+import ArrowForward from "@material-ui/icons/ArrowForward";
 import DateFnsUtils from "@date-io/date-fns";
+import RadioGroup from "@material-ui/core/RadioGroup";
+import Radio from "@material-ui/core/Radio";
 import { MuiPickersUtilsProvider, DateTimePicker } from "@material-ui/pickers";
 import ptbrLocale from "date-fns/locale/pt-BR";
+import Stepper from "@material-ui/core/Stepper";
+import Step from "@material-ui/core/Step";
+import StepLabel from "@material-ui/core/StepLabel";
+import StepContent from "@material-ui/core/StepContent";
+import Paper from "@material-ui/core/Paper";
+import { blackColor, whiteColor } from "assets/jss/material-dashboard-react";
 
 import DataSelect from "../../../components/DataSelect/DataSelect.jsx";
 
 import {
-  CadastrarItemLoja,
-  ObterItemLoja,
-  AlterarItemLoja
-} from "../../../services/api/itensLoja";
+  CadastrarDesafio,
+  ObterDesafio,
+  AlterarDesafio
+} from "../../../services/api/desafios";
 
 import { ListarProdutos } from "../../../services/api/produto";
 
-import { blackColor } from "assets/jss/material-dashboard-react";
-
 const useStyles = makeStyles(theme => ({
+  root: {
+    width: "90%"
+  },
+  button: {
+    marginTop: theme.spacing(1),
+    marginRight: theme.spacing(1)
+  },
+  actionsContainer: {
+    marginBottom: theme.spacing(2)
+  },
+  resetContainer: {
+    padding: theme.spacing(3)
+  },
   container: {
     display: "flex",
-    flexWrap: "wrap"
+    flexWrap: "wrap",
+    background: whiteColor,
+    padding: theme.spacing(2)
   },
   leftIcon: {
     marginRight: theme.spacing(1)
@@ -47,53 +70,86 @@ const useStyles = makeStyles(theme => ({
   iconSmall: {
     fontSize: 20
   },
-  button: {
-    margin: theme.spacing(1)
-  },
   colorBlack: {
     color: blackColor
   }
 }));
 
+function getSteps() {
+  return ["Informações", "Objetivo", "Premio", "Finalizar"];
+}
+
 export default function TextFields({ ...props }) {
   const classes = useStyles();
 
-  const [tituloPagina, setTituloPagina] = React.useState("Cadastrar Item Loja");
+  const [tituloPagina, setTituloPagina] = React.useState("Cadastrar Desafio");
+  const [tipoPremio, setTipoPremio] = React.useState("CPGold");
+  const [tipoObjetivo, setTipoObjetivo] = React.useState("Dinheiro");
+
+  const [premio, setPremio] = React.useState({
+    tipo: "CPGold",
+    quantidade: 0,
+    produto: null
+  });
+
+  const [objetivo, setObjetivo] = React.useState({
+    tipo: "Dinheiro",
+    quantidade: 0,
+    produto: null
+  });
+
   const [values, setValues] = React.useState({
-    produto: null,
-    tempoDisponivel: null,
-    icon: "",
-    quantidadeVendida: "",
-    preco: "",
-    quantidadeDisponivel: "",
-    status: true,
     nome: "",
     descricao: "",
-    hotSale: false
+    status: true,
+    emGrupo: false,
+    tempoDuracao: null
   });
+
+  const [activeStep, setActiveStep] = React.useState(0);
+  const steps = getSteps();
+
   const [suggestions, setSuggestions] = React.useState([]);
 
   useEffect(() => {
-    const obterItemLoja = async () => {
-      if (typeof props.match.params.item_id !== "undefined") {
+    const obterDesafio = async () => {
+      if (typeof props.match.params.desafioId !== "undefined") {
         //values._id = props.match.params.produtoId;
-        const response = await ObterItemLoja({
-          itemId: props.match.params.item_id
+        const response = await ObterDesafio({
+          desafioId: props.match.params.desafioId
         });
 
         response.data.retorno.status =
           response.data.retorno.status === 1 ? true : false;
 
-        response.data.retorno.produto = {
-          label:
-            response.data.retorno.produto.codigo +
-            " - " +
-            response.data.retorno.produto.nome,
-          value: response.data.retorno.produto._id
-        };
+        setObjetivo({
+          quantidade: response.data.retorno.objetivo.quantidade,
+          produto: {
+            label:
+              response.data.retorno.objetivo.produto.codigo +
+              " - " +
+              response.data.retorno.objetivo.produto.nome,
+            value: response.data.retorno.objetivo.produto._id
+          }
+        });
+
+        setPremio({
+          quantidade: response.data.retorno.premio.quantidade,
+          produto: {
+            label:
+              response.data.retorno.premio.produto.codigo +
+              " - " +
+              response.data.retorno.premio.produto.nome,
+            value: response.data.retorno.premio.produto._id
+          }
+        });
+
+        setTipoPremio(response.data.retorno.premio.tipo);
+        setTipoObjetivo(response.data.retorno.objetivo.tipo);
+
         setValues(response.data.retorno);
 
-        setTituloPagina("Alterar Item Loja");
+        setTituloPagina("Alterar Desafio");
         return;
       }
 
@@ -112,14 +168,40 @@ export default function TextFields({ ...props }) {
       setSuggestions(produtos);
     };
 
-    obterItemLoja();
+    obterDesafio();
   }, []);
+
+  function handleChangeRadioPremio(event) {
+    setTipoPremio(event.target.value);
+  }
+
+  const handleChangePremio = name => event => {
+    setPremio({ ...premio, [name]: event.target.value });
+  };
+
+  const handleChangeObjetivo = name => event => {
+    setObjetivo({ ...objetivo, [name]: event.target.value });
+  };
+
+  function handleChangeRadioObjetivo(event) {
+    setTipoObjetivo(event.target.value);
+  }
 
   const handleChange = name => event => {
     setValues({ ...values, [name]: event.target.value });
   };
 
-  const handleChangeComum = name => event => {
+  const handleChangeComum = (name, nomeObjeto) => event => {
+    if (nomeObjeto == "Objetivo") {
+      setObjetivo({ ...objetivo, [name]: event });
+      return;
+    }
+
+    if (nomeObjeto === "Premio") {
+      setPremio({ ...premio, [name]: event });
+      return;
+    }
+
     setValues({ ...values, [name]: event });
   };
 
@@ -127,48 +209,55 @@ export default function TextFields({ ...props }) {
     setValues({ ...values, [name]: event.target.checked });
   };
 
-  const salvarProduto = async e => {
+  function handleNext() {
+    setActiveStep(prevActiveStep => prevActiveStep + 1);
+  }
+
+  function handleBack() {
+    setActiveStep(prevActiveStep => prevActiveStep - 1);
+  }
+
+  const salvarDesafio = async e => {
     try {
       e.preventDefault();
 
       if (typeof values._id === "undefined") {
-        const response = await CadastrarItemLoja({
-          produto: values.produto.value,
-          tempoDisponivel: values.tempoDisponivel,
-          icon: values.icon,
-          quantidadeVendida: values.quantidadeVendida,
-          preco: values.preco,
-          quantidadeDisponivel: values.quantidadeDisponivel,
-          status: values.status,
+        const response = await CadastrarDesafio({
           nome: values.nome,
           descricao: values.descricao,
-          hotSale: values.hotSale
+          status: values.status,
+          emGrupo: values.emGrupo,
+          tempoDuracao: values.tempoDuracao,
+          premio: {
+            tipo: tipoPremio,
+            produto: premio.produto.value,
+            quantidade: premio.quantidade
+          },
+          objetivo: {
+            tipo: tipoObjetivo,
+            produto: objetivo.produto.value,
+            quantidade: objetivo.quantidade
+          }
         });
 
         if (response.data.sucesso) {
           props.history.push(
-            "/admin/cadastrar/item_loja/" + response.data.retorno._id
+            "/admin/cadastrar/desafio/" + response.data.retorno._id
           );
           window.location.reload();
         }
         return;
       }
 
-      await AlterarItemLoja({
+      await AlterarDesafio({
         _id: values._id,
-        produto: values.produto.value,
-        tempoDisponivel: values.tempoDisponivel,
-        icon: values.icon,
-        quantidadeVendida: values.quantidadeVendida,
-        preco: values.preco,
-        quantidadeDisponivel: values.quantidadeDisponivel,
-        status: values.status,
         nome: values.nome,
         descricao: values.descricao,
-        hotSale: values.hotSale
+        status: values.status,
+        tempoDuracao: values.tempoDuracao
       });
     } catch (err) {
-      console.log("salvarProduto:", err);
+      console.log("salvarDesafio:", err);
     }
   };
 
@@ -176,7 +265,7 @@ export default function TextFields({ ...props }) {
     <form
       className={classes.container}
       autoComplete="off"
-      onSubmit={salvarProduto}
+      onSubmit={salvarDesafio}
     >
       <Grid container spacing={3}>
         <Grid item xs={12}>
@@ -185,156 +274,362 @@ export default function TextFields({ ...props }) {
           </Typography>
         </Grid>
         <Grid item xs={12}>
-          <Grid item xs={4}>
-            <DataSelect
-              label="Produto"
-              placeholder="Selecione um produto de referência"
-              onChange={handleChangeComum("produto")}
-              disabled={values._id ? true : false}
-              value={values.produto}
-            >
-              {suggestions}
-            </DataSelect>
-          </Grid>
-        </Grid>
-        <Grid item xs={12}>
-          <FormGroup row>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  style={{ margin: 8 }}
-                  checked={values.hotSale}
-                  onChange={handleChangeChecked("hotSale")}
-                  value="hotSale"
-                  color="primary"
-                />
-              }
-              label="Tornar destaque na loja"
-            />
-          </FormGroup>
-        </Grid>
-        <Grid item xs={12}>
-          <TextField
-            required
-            id="nome"
-            label="Nome"
-            style={{ margin: 8 }}
-            placeholder="Nome do  item na loja"
-            helperText="Nome do  item na loja"
-            fullWidth
-            margin="normal"
-            InputLabelProps={{
-              shrink: true
-            }}
-            value={values.nome}
-            onChange={handleChange("nome")}
-          />
-        </Grid>
-        <Grid item xs={12}>
-          <TextField
-            id="descricao"
-            label="Descrição"
-            style={{ margin: 8 }}
-            placeholder="Descrição do item na loja"
-            helperText="Descrição do item na loja"
-            fullWidth
-            multiline
-            rows="4"
-            margin="normal"
-            InputLabelProps={{
-              shrink: true
-            }}
-            value={values.descricao}
-            onChange={handleChange("descricao")}
-          />
-        </Grid>
-        <Grid item xs={12}>
-          <Grid item xs={2}>
-            <TextField
-              id="preco"
-              label="CPGold"
-              style={{ margin: 8 }}
-              placeholder="Preço em CPGold do item"
-              helperText="Preço em CPGold do item"
-              fullWidth
-              type="number"
-              margin="normal"
-              InputLabelProps={{
-                shrink: true
-              }}
-              value={values.preco}
-              onChange={handleChange("preco")}
-            />
-          </Grid>
-        </Grid>
-        <Grid item xs={6}>
-          <TextField
-            id="quantidadeDisponivel"
-            label="Quantidade disponível"
-            style={{ margin: 8 }}
-            placeholder="Quantidade disponível na loja"
-            helperText="Quantidade disponível na loja"
-            fullWidth
-            type="number"
-            margin="normal"
-            InputLabelProps={{
-              shrink: true
-            }}
-            value={values.quantidadeDisponivel}
-            onChange={handleChange("quantidadeDisponivel")}
-          />
-        </Grid>
-        <Grid item xs={6}>
-          <TextField
-            id="quantidadeVendida"
-            label="Quantidade Resgatada"
-            style={{ margin: 8 }}
-            className={classes.colorBlack}
-            placeholder="Quantidade comprada pelos clientes"
-            helperText="Quantidade comprada pelos clientes"
-            fullWidth
-            disabled
-            margin="normal"
-            InputLabelProps={{
-              shrink: true
-            }}
-            value={values.quantidadeVendida}
-            onChange={handleChange("quantidadeVendida")}
-          />
-        </Grid>
-        <Grid item xs={12}>
-          <MuiPickersUtilsProvider utils={DateFnsUtils} locale={ptbrLocale}>
-            <DateTimePicker
-              variant="inline"
-              label="Disponível Até"
-              style={{ margin: 8 }}
-              value={values.tempoDisponivel}
-              onChange={handleChangeComum("tempoDisponivel")}
-              format="dd/MM/yyyy HH:mm"
-            />
-          </MuiPickersUtilsProvider>
-        </Grid>
-        <Grid item xs={12}>
-          <FormGroup row>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  style={{ margin: 8 }}
-                  checked={values.status}
-                  onChange={handleChangeChecked("status")}
-                  value="status"
-                  color="primary"
-                />
-              }
-              label="Ativo"
-            />
-          </FormGroup>
-        </Grid>
-        <Grid item xs={12}>
-          <Button variant="contained" type="submit" color="primary">
-            <SaveIcon className={clsx(classes.leftIcon, classes.iconSmall)} />
-            Salvar
-          </Button>
+          <div className={classes.root}>
+            <Stepper activeStep={activeStep} orientation="vertical">
+              {steps.map((label, index) => (
+                <Step key={label}>
+                  <StepLabel>{label}</StepLabel>
+                  <StepContent>
+                    {(index === 0 && (
+                      <Paper
+                        square
+                        elevation={0}
+                        className={classes.resetContainer}
+                      >
+                        <Grid item xs={12}>
+                          <TextField
+                            required
+                            id="nome"
+                            label="Nome"
+                            style={{ margin: 8 }}
+                            placeholder="Nome"
+                            helperText="Nome"
+                            fullWidth
+                            margin="normal"
+                            InputLabelProps={{
+                              shrink: true
+                            }}
+                            value={values.nome}
+                            onChange={handleChange("nome")}
+                          />
+                        </Grid>
+                        <Grid item xs={12}>
+                          <TextField
+                            id="descricao"
+                            label="Descrição"
+                            style={{ margin: 8 }}
+                            placeholder="Descrição"
+                            helperText="Descrição"
+                            fullWidth
+                            multiline
+                            rows="4"
+                            margin="normal"
+                            InputLabelProps={{
+                              shrink: true
+                            }}
+                            value={values.descricao}
+                            onChange={handleChange("descricao")}
+                          />
+                        </Grid>
+                        <Grid item xs={12}>
+                          <MuiPickersUtilsProvider
+                            utils={DateFnsUtils}
+                            locale={ptbrLocale}
+                          >
+                            <DateTimePicker
+                              variant="inline"
+                              label="Disponível Até"
+                              style={{ margin: 8 }}
+                              value={values.tempoDuracao}
+                              required
+                              onChange={handleChangeComum(
+                                "tempoDuracao",
+                                "values"
+                              )}
+                              format="dd/MM/yyyy HH:mm"
+                            />
+                          </MuiPickersUtilsProvider>
+                        </Grid>
+                        <Grid item xs={12}>
+                          <FormGroup row>
+                            <FormControlLabel
+                              control={
+                                <Checkbox
+                                  style={{ margin: 8 }}
+                                  checked={values.status}
+                                  onChange={handleChangeChecked("status")}
+                                  value="status"
+                                  color="primary"
+                                />
+                              }
+                              label="Ativo"
+                            />
+                          </FormGroup>
+                        </Grid>
+                      </Paper>
+                    )) ||
+                      (index === 1 && (
+                        <Paper
+                          square
+                          elevation={0}
+                          className={classes.resetContainer}
+                        >
+                          <Grid item xs={12}>
+                            <FormGroup row>
+                              <FormControlLabel
+                                control={
+                                  <Checkbox
+                                    style={{ margin: 8 }}
+                                    checked={values.emGrupo}
+                                    onChange={handleChangeChecked("emGrupo")}
+                                    value="emGrupo"
+                                    color="primary"
+                                    disabled={values._id ? true : false}
+                                  />
+                                }
+                                label="Em Grupo"
+                              />
+                            </FormGroup>
+                          </Grid>
+                          <Grid item xs={12}>
+                            <RadioGroup
+                              aria-label="position"
+                              name="position"
+                              value={tipoObjetivo}
+                              onChange={handleChangeRadioObjetivo}
+                              row
+                              style={{ margin: 8 }}
+                            >
+                              <FormControlLabel
+                                value="Dinheiro"
+                                control={
+                                  <Radio
+                                    disabled={values._id ? true : false}
+                                    color="primary"
+                                  />
+                                }
+                                label="Dinheiro"
+                                labelPlacement="end"
+                              />
+                              <FormControlLabel
+                                value="Produto"
+                                control={
+                                  <Radio
+                                    disabled={values._id ? true : false}
+                                    color="primary"
+                                  />
+                                }
+                                label="Produto"
+                                labelPlacement="end"
+                              />
+                            </RadioGroup>
+                          </Grid>
+
+                          <Grid item xs={12}>
+                            <Grid item xs={4}>
+                              <TextField
+                                id="objetivoDinheiro"
+                                label={
+                                  tipoObjetivo === "Produto"
+                                    ? "Quantidade de produtos"
+                                    : "Quantidade em dinheiro"
+                                }
+                                style={{ margin: 8 }}
+                                placeholder={
+                                  tipoObjetivo === "Produto"
+                                    ? "Quantidade de produtos"
+                                    : "Quantidade em dinheiro"
+                                }
+                                helperText={
+                                  tipoObjetivo === "Produto"
+                                    ? "Quantidade de produtos a serem comprados"
+                                    : "Quantidade de dinheiro a ser gasto"
+                                }
+                                fullWidth
+                                type="number"
+                                margin="normal"
+                                InputLabelProps={{
+                                  shrink: true
+                                }}
+                                required
+                                disabled={values._id ? true : false}
+                                value={objetivo.quantidade}
+                                onChange={handleChangeObjetivo("quantidade")}
+                              />
+                            </Grid>
+                          </Grid>
+
+                          {tipoObjetivo === "Produto" && (
+                            <Grid item xs={12}>
+                              <Grid item xs={4}>
+                                <DataSelect
+                                  label="Produto"
+                                  placeholder="Selecione um produto de referência"
+                                  onChange={handleChangeComum(
+                                    "produto",
+                                    "Objetivo"
+                                  )}
+                                  disabled={values._id ? true : false}
+                                  value={objetivo.produto}
+                                >
+                                  {suggestions}
+                                </DataSelect>
+                              </Grid>
+                            </Grid>
+                          )}
+                        </Paper>
+                      )) ||
+                      (index === 2 && (
+                        <Paper
+                          square
+                          elevation={0}
+                          className={classes.resetContainer}
+                        >
+                          <Grid item xs={12}>
+                            <RadioGroup
+                              aria-label="position"
+                              name="position"
+                              value={tipoPremio}
+                              onChange={handleChangeRadioPremio}
+                              row
+                              style={{ margin: 8 }}
+                            >
+                              <FormControlLabel
+                                value="CPGold"
+                                control={
+                                  <Radio
+                                    disabled={values._id ? true : false}
+                                    color="primary"
+                                  />
+                                }
+                                label="CPGold"
+                                labelPlacement="end"
+                              />
+                              <FormControlLabel
+                                value="Produto"
+                                control={
+                                  <Radio
+                                    disabled={values._id ? true : false}
+                                    color="primary"
+                                  />
+                                }
+                                label="Produto"
+                                labelPlacement="end"
+                              />
+                            </RadioGroup>
+                          </Grid>
+
+                          <Grid item xs={12}>
+                            <Grid item xs={4}>
+                              <TextField
+                                id="premioGold"
+                                label={
+                                  tipoPremio === "Produto"
+                                    ? "Quantidade"
+                                    : "CPGold"
+                                }
+                                style={{ margin: 8 }}
+                                placeholder={
+                                  tipoPremio === "Produto"
+                                    ? "Quantidade"
+                                    : "Prêmio em CPGold"
+                                }
+                                helperText={
+                                  tipoPremio === "Produto"
+                                    ? "Quantidade de produtos"
+                                    : "Prêmio em CPGold"
+                                }
+                                fullWidth
+                                type="number"
+                                margin="normal"
+                                InputLabelProps={{
+                                  shrink: true
+                                }}
+                                required
+                                disabled={values._id ? true : false}
+                                value={premio.quantidade}
+                                onChange={handleChangePremio("quantidade")}
+                              />
+                            </Grid>
+                          </Grid>
+
+                          {tipoPremio === "Produto" && (
+                            <Grid item xs={12}>
+                              <Grid item xs={4}>
+                                <DataSelect
+                                  label="Produto"
+                                  placeholder="Selecione um produto de referência"
+                                  onChange={handleChangeComum(
+                                    "produto",
+                                    "Premio"
+                                  )}
+                                  disabled={values._id ? true : false}
+                                  value={premio.produto}
+                                >
+                                  {suggestions}
+                                </DataSelect>
+                              </Grid>
+                            </Grid>
+                          )}
+                        </Paper>
+                      )) ||
+                      (index === 3 && (
+                        <Paper
+                          square
+                          elevation={0}
+                          className={classes.resetContainer}
+                        >
+                          <Typography variant="h6" id="tableTitle">
+                            {!values._id
+                              ? `Atenção: Ao cadastrar um desafio, o objetivo e o
+                            prêmio não poderão ser alterados!`
+                              : `Alterar Informações`}
+                          </Typography>
+                        </Paper>
+                      ))}
+                    <div className={classes.actionsContainer}>
+                      <Button
+                        disabled={activeStep === 0}
+                        onClick={handleBack}
+                        className={classes.button}
+                        variant="contained"
+                        color="secondary"
+                      >
+                        <ArrowBack
+                          className={clsx(classes.leftIcon, classes.iconSmall)}
+                        />
+                        Voltar
+                      </Button>
+
+                      {index < 3 && (
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          onClick={handleNext}
+                          className={classes.button}
+                        >
+                          <ArrowForward
+                            className={clsx(
+                              classes.leftIcon,
+                              classes.iconSmall
+                            )}
+                          />
+                          Próximo
+                        </Button>
+                      )}
+
+                      {index === 3 && (
+                        <Button
+                          variant="contained"
+                          type="submit"
+                          color="primary"
+                          className={classes.button}
+                        >
+                          <SaveIcon
+                            className={clsx(
+                              classes.leftIcon,
+                              classes.iconSmall
+                            )}
+                          />
+                          Salvar
+                        </Button>
+                      )}
+                    </div>
+                  </StepContent>
+                </Step>
+              ))}
+            </Stepper>
+          </div>
         </Grid>
       </Grid>
     </form>

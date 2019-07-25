@@ -10,6 +10,8 @@ import FormControlLabel from "@material-ui/core/FormControlLabel";
 import Button from "@material-ui/core/Button";
 import SaveIcon from "@material-ui/icons/Save";
 
+import { whiteColor } from "assets/jss/material-dashboard-react.jsx";
+
 import {
   CadastrarProduto,
   ObterProduto,
@@ -19,7 +21,9 @@ import {
 const useStyles = makeStyles(theme => ({
   container: {
     display: "flex",
-    flexWrap: "wrap"
+    flexWrap: "wrap",
+    background: whiteColor,
+    padding: theme.spacing(2)
   },
   leftIcon: {
     marginRight: theme.spacing(1)

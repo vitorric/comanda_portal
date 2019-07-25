@@ -1,16 +1,16 @@
 import API from "../index";
 
-// export const CadastrarItemLoja = itemLoja => {
-//   return API.post("cadastrar/itemLoja", itemLoja);
-// };
+export const CadastrarDesafio = desafio => {
+  return API.post("cadastrar/desafio", desafio);
+};
 
-// export const AlterarItemLoja = itemLoja => {
-//   return API.post("alterar/itemLoja", itemLoja);
-// };
+export const AlterarDesafio = desafio => {
+  return API.post("alterar/desafio", desafio);
+};
 
-// export const ObterItemLoja = itemId => {
-//   return API.post("obter/itemLoja", itemId);
-// };
+export const ObterDesafio = desafioId => {
+  return API.post("obter/desafio", desafioId);
+};
 
 export const ListarDesafios = () => {
   return API.post("listar/desafios");
