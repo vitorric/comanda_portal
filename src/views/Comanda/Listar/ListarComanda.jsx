@@ -53,10 +53,10 @@ function getSorting(order, orderBy) {
 
 const headRows = [
   {
-    id: "responsavel",
+    id: "lider",
     numeric: false,
     disablePadding: true,
-    label: "Responsável"
+    label: "Responsável/Lider"
   },
   { id: "valorTotal", numeric: false, disablePadding: false, label: "Valor" },
   {
@@ -172,7 +172,7 @@ const EnhancedTableToolbar = props => {
           </Typography>
         ) : (
           <Typography variant="h6" id="tableTitle">
-            Comanda
+            Comandas
           </Typography>
         )}
       </div>
@@ -212,7 +212,7 @@ const useStyles = makeStyles(theme => ({
 export default function EnhancedTable() {
   const classes = useStyles();
   const [order, setOrder] = React.useState("asc");
-  const [orderBy, setOrderBy] = React.useState("responsavel.nome");
+  const [orderBy, setOrderBy] = React.useState("lider.nome");
   const [selected, setSelected] = React.useState([]);
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
@@ -239,7 +239,7 @@ export default function EnhancedTable() {
 
   function handleSelectAllClick(event) {
     if (event.target.checked) {
-      const newSelecteds = data.map(n => n.responsavel.nome);
+      const newSelecteds = data.map(n => n.lider.nome);
       setSelected(newSelecteds);
       return;
     }
@@ -283,7 +283,7 @@ export default function EnhancedTable() {
     setData(
       dataBackup.filter(item => {
         return (
-          item.responsavel.nome.toLowerCase().includes(filter.toLowerCase()) ||
+          item.lider.nome.toLowerCase().includes(filter.toLowerCase()) ||
           item.createdAt.toLowerCase().includes(filter.toLowerCase()) ||
           (item.dataSaida !== null &&
             item.dataSaida.toLowerCase().includes(filter.toLowerCase()))
@@ -340,14 +340,14 @@ export default function EnhancedTable() {
               {stableSort(data, getSorting(order, orderBy))
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((dataItem, index) => {
-                  const isItemSelected = isSelected(dataItem.responsavel.nome);
+                  const isItemSelected = isSelected(dataItem.lider.nome);
                   const labelId = `enhanced-table-checkbox-${index}`;
 
                   return (
                     <TableRow
                       hover
                       onClick={event =>
-                        handleClick(event, dataItem.responsavel.nome)
+                        handleClick(event, dataItem.lider.nome)
                       }
                       role="checkbox"
                       aria-checked={isItemSelected}
@@ -367,7 +367,7 @@ export default function EnhancedTable() {
                         scope="row"
                         padding="none"
                       >
-                        {dataItem.responsavel.nome}
+                        {dataItem.lider.nome}
                       </TableCell>
                       <TableCell>{dataItem.valorTotal}</TableCell>
                       <TableCell>{dataItem.createdAt}</TableCell>
