@@ -7,7 +7,10 @@ import Grid from "@material-ui/core/Grid";
 import Typography from "@material-ui/core/Typography";
 import Button from "@material-ui/core/Button";
 import SaveIcon from "@material-ui/icons/Save";
+import ThumbDownAltIcon from "@material-ui/icons/ThumbDownAlt";
+import ThumbUpAltIcon from "@material-ui/icons/ThumbUpAlt";
 import AddIcon from "@material-ui/icons/Add";
+import SearchIcon from "@material-ui/icons/Search";
 import AppBar from "@material-ui/core/AppBar";
 import Tabs from "@material-ui/core/Tabs";
 import Tab from "@material-ui/core/Tab";
@@ -21,15 +24,19 @@ import TableCell from "@material-ui/core/TableCell";
 import TableHead from "@material-ui/core/TableHead";
 import TableRow from "@material-ui/core/TableRow";
 import Chip from "@material-ui/core/Chip";
+import Tooltip from "@material-ui/core/Tooltip";
+import Fab from "@material-ui/core/Fab";
 
 import DataSelect from "../../../components/DataSelect/DataSelect.jsx";
 import { FormatarDinheiro } from "../../../utils";
 
 import {
   ObterComanda,
+  CadastrarComanda,
   AdicionarProdutoComanda
 } from "../../../services/api/comanda";
 
+import { ObterClienteChaveUnica } from "../../../services/api/cliente";
 import { ListarProdutos } from "../../../services/api/produto";
 
 import {
@@ -108,6 +115,13 @@ export default function TextFields({ ...props }) {
     createdAt: "",
     status: true
   });
+  const [chaveUnicaBusca, setChaveUnicaBusca] = React.useState("");
+  const [clienteComanda, setClienteComanda] = React.useState({
+    apelido: "",
+    chaveAmigavel: "",
+    nome: "",
+    _id: null
+  });
   const [indexTab, setIndexTab] = React.useState(0);
   const [suggestions, setSuggestions] = React.useState([]);
   const [novoProdutoComanda, setNovoProdutoComanda] = React.useState({
@@ -116,11 +130,16 @@ export default function TextFields({ ...props }) {
     comanda: ""
   });
 
-  // function subtotal() {
-  //   const valorPago = values.grupo.map(({ grupo }) => grupo.valorPago).reduce((sum, i) => sum + i, 0);
-  //   console.log(valorPago)
-  //   return values.valorTotal;
-  // }
+  function subtotal() {
+    return values.valorTotal - valorPago();
+  }
+
+  function valorPago() {
+    const valorPago = values.grupo
+      .map(grupo => grupo.valorPago)
+      .reduce((sum, i) => sum + i, 0);
+    return valorPago;
+  }
 
   useEffect(() => {
     const obterComanda = async () => {
@@ -180,34 +199,54 @@ export default function TextFields({ ...props }) {
     setValues({ ...values, [name]: event.target.checked });
   };
 
-  const salvarComanda = async e => {
-    // try {
-    //   e.preventDefault();
-    //   if (typeof values._id === "undefined") {
-    //     const response = await CadastrarItemLoja({
-    //       produto: values.produto.value,
-    //       tempoDisponivel: values.tempoDisponivel,
-    //       icon: values.icon,
-    //       quantidadeVendida: values.quantidadeVendida,
-    //       preco: values.preco,
-    //       quantidadeDisponivel: values.quantidadeDisponivel,
-    //       status: values.status,
-    //       nome: values.nome,
-    //       descricao: values.descricao,
-    //       hotSale: values.hotSale
-    //     });
-    //     if (response.data.sucesso) {
-    //       props.history.push(
-    //         "/admin/cadastrar/item_loja/" + response.data.retorno._id
-    //       );
-    //       window.location.reload();
-    //     }
-    //     return;
-    //   }
-    //   await AlterarItemLoja({});
-    // } catch (err) {
-    //   console.log("salvarComanda:", err);
-    // }
+  const obterClienteChaveUnica = async e => {
+    e.preventDefault();
+
+    try {
+      const response = await ObterClienteChaveUnica({
+        chaveAmigavel: chaveUnicaBusca
+      });
+
+      if (response.data.sucesso) {
+        setClienteComanda(response.data.retorno);
+      }
+    } catch (err) {
+      console.log("obterClienteChaveUnica: ", err);
+    }
+  };
+
+  const confirmarCriacaoComanda = async e => {
+    e.preventDefault();
+
+    try {
+      const response = await CadastrarComanda({
+        clienteId: clienteComanda._id
+      });
+      console.log(response);
+      if (response.data.sucesso) {
+        props.history.push(
+          "/admin/cadastrar/comanda/" + response.data.retorno._id
+        );
+        window.location.reload();
+      }
+    } catch (err) {
+      console.log("confirmarCriacaoComanda: ", err);
+    }
+  };
+
+  const negarCriacaoComanda = async e => {
+    e.preventDefault();
+
+    try {
+      setClienteComanda({
+        apelido: "",
+        chaveAmigavel: "",
+        nome: "",
+        _id: null
+      });
+    } catch (err) {
+      console.log("negarCriacaoComanda: ", err);
+    }
   };
 
   const adicionarItemComanda = async e => {
@@ -244,24 +283,100 @@ export default function TextFields({ ...props }) {
         </Grid>
         {(typeof values._id === "undefined" && (
           <Grid item xs={12}>
-            <Grid item xs={4}>
-              <TextField
-                id="valorTotal"
-                label="Valor da Comanda"
-                style={{ margin: 8 }}
-                className={classes.colorBlack}
-                placeholder="Valor da Comanda"
-                helperText="Valor da total da comanda"
-                fullWidth
-                disabled
-                margin="normal"
-                InputLabelProps={{
-                  shrink: true
-                }}
-                value={values.valorTotal}
-                onChange={handleChange("valorTotal")}
-              />
+            <Grid item xs={12}>
+              <Grid item xs={4}>
+                <TextField
+                  id="chaveAmigavel"
+                  label="Chave amigável do cliente"
+                  style={{ margin: 8 }}
+                  className={classes.colorBlack}
+                  placeholder="Chave amigável do cliente"
+                  helperText="Insira a chave amigável do cliente"
+                  fullWidth
+                  margin="normal"
+                  InputLabelProps={{
+                    shrink: true
+                  }}
+                  value={chaveUnicaBusca}
+                  onChange={e => {
+                    setChaveUnicaBusca(e.target.value);
+                  }}
+                />
+              </Grid>
+              <Grid item xs={2}>
+                <Button
+                  variant="contained"
+                  type="submit"
+                  color="primary"
+                  onClick={obterClienteChaveUnica}
+                >
+                  <SearchIcon
+                    className={clsx(classes.leftIcon, classes.iconSmall)}
+                  />
+                  Buscar
+                </Button>
+              </Grid>
             </Grid>
+            {clienteComanda._id !== null && (
+              <Grid item xs={12} style={{ margin: "20px" }}>
+                <Grid item xs={12}>
+                  <Typography id="tableTitle"> RESULTADO</Typography>
+                </Grid>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell align="right">Nome</TableCell>
+                      <TableCell align="right">Apelido</TableCell>
+                      <TableCell align="right">CPF</TableCell>
+                      <TableCell align="right">Chave Amigável</TableCell>
+                      <TableCell align="right">Ação</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell align="right">{clienteComanda.nome}</TableCell>
+                      <TableCell align="right">
+                        {clienteComanda.apelido}
+                      </TableCell>
+                      <TableCell align="right">{clienteComanda.cpf}</TableCell>
+                      <TableCell align="right">
+                        {clienteComanda.chaveAmigavel}
+                      </TableCell>
+                      <TableCell align="right">
+                        <Tooltip title="Confirmar" className={classes.button}>
+                          <Fab
+                            color="primary"
+                            size="small"
+                            onClick={confirmarCriacaoComanda}
+                          >
+                            <ThumbUpAltIcon
+                              className={clsx(
+                                classes.leftIcon,
+                                classes.iconSmall
+                              )}
+                            />
+                          </Fab>
+                        </Tooltip>
+                        <Tooltip
+                          title="Negar"
+                          className={classes.button}
+                          onClick={negarCriacaoComanda}
+                        >
+                          <Fab color="secondary" size="small">
+                            <ThumbDownAltIcon
+                              className={clsx(
+                                classes.leftIcon,
+                                classes.iconSmall
+                              )}
+                            />
+                          </Fab>
+                        </Tooltip>
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </Grid>
+            )}
           </Grid>
         )) ||
           (values._id !== null && (
@@ -322,14 +437,6 @@ export default function TextFields({ ...props }) {
                   value={values.createdAt}
                   onChange={handleChange("createdAt")}
                 />
-                <Grid item xs={12}>
-                  <Button variant="contained" type="submit" color="primary">
-                    <SaveIcon
-                      className={clsx(classes.leftIcon, classes.iconSmall)}
-                    />
-                    Salvar
-                  </Button>
-                </Grid>
               </TabPanel>
               <TabPanel value={indexTab} index={1} className={classes.tabPanel}>
                 <Table>
@@ -376,15 +483,19 @@ export default function TextFields({ ...props }) {
                     <TableRow>
                       <TableCell rowSpan={3} />
                       <TableCell colSpan={3}>Subtotal</TableCell>
-                      <TableCell align="right">{FormatarDinheiro(0)}</TableCell>
+                      <TableCell align="left">
+                        {FormatarDinheiro(subtotal())}
+                      </TableCell>
                     </TableRow>
                     <TableRow>
                       <TableCell colSpan={3}>Valor Pago</TableCell>
-                      <TableCell align="right">{FormatarDinheiro(0)}</TableCell>
+                      <TableCell align="left">
+                        {FormatarDinheiro(valorPago())}
+                      </TableCell>
                     </TableRow>
                     <TableRow>
                       <TableCell colSpan={3}>Total Restante</TableCell>
-                      <TableCell align="right">
+                      <TableCell align="left">
                         {FormatarDinheiro(values.valorTotal)}
                       </TableCell>
                     </TableRow>
@@ -442,7 +553,7 @@ export default function TextFields({ ...props }) {
                       <TableCell>Nome</TableCell>
                       <TableCell align="left">Preço</TableCell>
                       <TableCell align="left">Quantidade</TableCell>
-                      <TableCell align="right">Preço total</TableCell>
+                      <TableCell align="left">Preço total</TableCell>
                       <TableCell align="right">Ação</TableCell>
                     </TableRow>
                   </TableHead>
@@ -450,11 +561,11 @@ export default function TextFields({ ...props }) {
                     {values.produtos.map(row => (
                       <TableRow key={row.produto.nome}>
                         <TableCell>{row.produto.nome}</TableCell>
-                        <TableCell align="right">
+                        <TableCell align="left">
                           {FormatarDinheiro(row.preco)}
                         </TableCell>
-                        <TableCell align="right">{row.quantidade}</TableCell>
-                        <TableCell align="right">
+                        <TableCell align="left">{row.quantidade}</TableCell>
+                        <TableCell align="left">
                           {FormatarDinheiro(row.precoTotal)}
                         </TableCell>
                         <TableCell>
