@@ -12,6 +12,8 @@ import SaveIcon from "@material-ui/icons/Save";
 import DateFnsUtils from "@date-io/date-fns";
 import { MuiPickersUtilsProvider, DateTimePicker } from "@material-ui/pickers";
 import ptbrLocale from "date-fns/locale/pt-BR";
+import Snackbar from "@material-ui/core/Snackbar";
+import CustomAlert from "../../../components/CustomAlert/CustomAlert.jsx";
 
 import DataSelect from "../../../components/DataSelect/DataSelect.jsx";
 
@@ -66,17 +68,23 @@ export default function TextFields({ ...props }) {
   const [tituloPagina, setTituloPagina] = React.useState("Cadastrar Item Loja");
   const [values, setValues] = React.useState({
     produto: null,
+    tempoEntrarNoAr: new Date(),
     tempoDisponivel: null,
     icon: "",
-    quantidadeVendida: "",
-    preco: "",
-    quantidadeDisponivel: "",
+    quantidadeVendida: 0,
+    preco: 0,
+    quantidadeDisponivel: 0,
     status: true,
     nome: "",
     descricao: "",
     hotSale: false
   });
   const [suggestions, setSuggestions] = React.useState([]);
+  const [optionsAlert, setOptionsAlert] = React.useState({
+    open: false,
+    message: "",
+    variant: "success"
+  });
 
   useEffect(() => {
     const obterItemLoja = async () => {
@@ -109,7 +117,7 @@ export default function TextFields({ ...props }) {
       const response = await ListarProdutos();
       let produtos = [];
       response.data.retorno.map(item => {
-        produtos.push({
+        return produtos.push({
           label: item.codigo + " - " + item.nome,
           value: item._id
         });
@@ -118,7 +126,7 @@ export default function TextFields({ ...props }) {
     };
 
     obterItemLoja();
-  }, []);
+  }, [props.match.params.itemId]);
 
   const handleChange = name => event => {
     setValues({ ...values, [name]: event.target.value });
@@ -132,6 +140,18 @@ export default function TextFields({ ...props }) {
     setValues({ ...values, [name]: event.target.checked });
   };
 
+  function handleCloseAlert() {
+    setOptionsAlert({ ...optionsAlert, open: false });
+  }
+
+  function openAlert(variant, message) {
+    setOptionsAlert({
+      variant: variant,
+      message: message,
+      open: true
+    });
+  }
+
   const salvarProduto = async e => {
     try {
       e.preventDefault();
@@ -140,6 +160,7 @@ export default function TextFields({ ...props }) {
         const response = await CadastrarItemLoja({
           produto: values.produto.value,
           tempoDisponivel: values.tempoDisponivel,
+          tempoEntrarNoAr: values.tempoEntrarNoAr,
           icon: values.icon,
           quantidadeVendida: values.quantidadeVendida,
           preco: values.preco,
@@ -155,14 +176,17 @@ export default function TextFields({ ...props }) {
             "/admin/cadastrar/item_loja/" + response.data.retorno._id
           );
           window.location.reload();
+        } else {
+          openAlert("warning", response.data.mensagem);
         }
         return;
       }
 
-      await AlterarItemLoja({
+      const response = await AlterarItemLoja({
         _id: values._id,
         produto: values.produto.value,
         tempoDisponivel: values.tempoDisponivel,
+        tempoEntrarNoAr: values.tempoEntrarNoAr,
         icon: values.icon,
         quantidadeVendida: values.quantidadeVendida,
         preco: values.preco,
@@ -172,7 +196,14 @@ export default function TextFields({ ...props }) {
         descricao: values.descricao,
         hotSale: values.hotSale
       });
+
+      if (response.data.sucesso) {
+        openAlert("success", "Registro alterado com sucesso!");
+      } else {
+        openAlert("warning", response.data.mensagem);
+      }
     } catch (err) {
+      openAlert("error", "Solicitação inválida, tente novamente!");
       console.log("salvarProduto:", err);
     }
   };
@@ -183,6 +214,21 @@ export default function TextFields({ ...props }) {
       autoComplete="off"
       onSubmit={salvarProduto}
     >
+      <Snackbar
+        anchorOrigin={{
+          vertical: "top",
+          horizontal: "right"
+        }}
+        open={optionsAlert.open}
+        autoHideDuration={2000}
+        onClose={handleCloseAlert}
+      >
+        <CustomAlert
+          onClose={handleCloseAlert}
+          variant={optionsAlert.variant}
+          message={optionsAlert.message}
+        />
+      </Snackbar>
       <Grid container spacing={3}>
         <Grid item xs={12}>
           <Typography variant="h6" id="tableTitle">
@@ -308,6 +354,17 @@ export default function TextFields({ ...props }) {
           />
         </Grid>
         <Grid item xs={12}>
+          <MuiPickersUtilsProvider utils={DateFnsUtils} locale={ptbrLocale}>
+            <DateTimePicker
+              variant="inline"
+              label="Data para entrar no ar"
+              style={{ margin: 8 }}
+              value={values.tempoEntrarNoAr}
+              onChange={handleChangeComum("tempoEntrarNoAr")}
+              format="dd/MM/yyyy HH:mm"
+            />
+          </MuiPickersUtilsProvider>
+
           <MuiPickersUtilsProvider utils={DateFnsUtils} locale={ptbrLocale}>
             <DateTimePicker
               variant="inline"

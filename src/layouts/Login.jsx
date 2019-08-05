@@ -10,6 +10,8 @@ import LockOutlinedIcon from "@material-ui/icons/LockOutlined";
 import Typography from "@material-ui/core/Typography";
 import { makeStyles } from "@material-ui/core/styles";
 import Container from "@material-ui/core/Container";
+import Snackbar from "@material-ui/core/Snackbar";
+import CustomAlert from "../components/CustomAlert/CustomAlert.jsx";
 
 //Comunicao com API
 import { LoginEstabelecimento } from "../services/api/login";
@@ -54,13 +56,29 @@ export default function SignIn(props) {
 
   const [values, setValues] = React.useState({
     email: "estab1@email.com",
-    password: "1234",
-    error: ""
+    password: "1234"
+  });
+  const [optionsAlert, setOptionsAlert] = React.useState({
+    open: false,
+    message: "",
+    variant: "success"
   });
 
   const handleChange = name => event => {
     setValues({ ...values, [name]: event.target.value });
   };
+
+  function handleCloseAlert() {
+    setOptionsAlert({ ...optionsAlert, open: false });
+  }
+
+  function openAlert(variant, message) {
+    setOptionsAlert({
+      variant: variant,
+      message: message,
+      open: true
+    });
+  }
 
   const handleLogin = async e => {
     e.preventDefault();
@@ -68,7 +86,7 @@ export default function SignIn(props) {
     const { email, password } = values;
 
     if (!email || !password) {
-      values.error = "Preencha o email e a senha!";
+      openAlert("warning", "Preencha o email e a senha!");
     } else {
       try {
         const response = await LoginEstabelecimento({
@@ -85,15 +103,30 @@ export default function SignIn(props) {
           return;
         }
 
-        values.error = "Email ou senha inválida!";
+        openAlert("warning", response.data.mensagem);
       } catch (err) {
-        values.error = "Solicitação inválida, tente novamente!";
+        openAlert("error", "Solicitação inválida, tente novamente!");
       }
     }
   };
 
   return (
     <Container component="main" maxWidth="xs">
+      <Snackbar
+        anchorOrigin={{
+          vertical: "top",
+          horizontal: "right"
+        }}
+        open={optionsAlert.open}
+        autoHideDuration={2000}
+        onClose={handleCloseAlert}
+      >
+        <CustomAlert
+          onClose={handleCloseAlert}
+          variant={optionsAlert.variant}
+          message={optionsAlert.message}
+        />
+      </Snackbar>
       <CssBaseline />
       <div className={classes.paper}>
         <Avatar className={classes.avatar}>

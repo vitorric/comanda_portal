@@ -12,6 +12,9 @@ import SaveIcon from "@material-ui/icons/Save";
 
 import { whiteColor } from "assets/jss/material-dashboard-react.jsx";
 
+import Snackbar from "@material-ui/core/Snackbar";
+import CustomAlert from "../../../components/CustomAlert/CustomAlert.jsx";
+
 import {
   CadastrarProduto,
   ObterProduto,
@@ -55,10 +58,17 @@ export default function TextFields({ ...props }) {
     codigo: 0,
     nome: "",
     descricao: "",
-    custo: "",
-    preco: "",
-    estoque: "",
+    custo: 0,
+    preco: 0,
+    estoque: 0,
+    quantidadeVendida: 0,
     status: true
+  });
+
+  const [optionsAlert, setOptionsAlert] = React.useState({
+    open: false,
+    message: "",
+    variant: "success"
   });
 
   useEffect(() => {
@@ -78,7 +88,7 @@ export default function TextFields({ ...props }) {
     };
 
     obterProduto();
-  }, []);
+  }, [props.match.params.produtoId]);
 
   const handleChange = name => event => {
     setValues({ ...values, [name]: event.target.value });
@@ -88,17 +98,46 @@ export default function TextFields({ ...props }) {
     setValues({ ...values, [name]: event.target.checked });
   };
 
+  function handleCloseAlert() {
+    setOptionsAlert({ ...optionsAlert, open: false });
+  }
+
+  function openAlert(variant, message) {
+    setOptionsAlert({
+      variant: variant,
+      message: message,
+      open: true
+    });
+  }
+
   const salvarProduto = async e => {
     try {
       e.preventDefault();
 
       if (typeof values._id === "undefined") {
         const response = await CadastrarProduto(values);
+
+        if (response.data.sucesso) {
+          props.history.push(
+            "/admin/cadastrar/produto/" + response.data.retorno._id
+          );
+          window.location.reload();
+        } else {
+          openAlert("warning", response.data.mensagem);
+        }
+
         return;
       }
 
       const response = await AlterarProduto(values);
+
+      if (response.data.sucesso) {
+        openAlert("success", "Registro alterado com sucesso!");
+      } else {
+        openAlert("warning", response.data.mensagem);
+      }
     } catch (err) {
+      openAlert("error", "Solicitação inválida, tente novamente!");
       console.log("salvarProduto:", err);
     }
   };
@@ -109,6 +148,21 @@ export default function TextFields({ ...props }) {
       autoComplete="off"
       onSubmit={salvarProduto}
     >
+      <Snackbar
+        anchorOrigin={{
+          vertical: "top",
+          horizontal: "right"
+        }}
+        open={optionsAlert.open}
+        autoHideDuration={2000}
+        onClose={handleCloseAlert}
+      >
+        <CustomAlert
+          onClose={handleCloseAlert}
+          variant={optionsAlert.variant}
+          message={optionsAlert.message}
+        />
+      </Snackbar>
       <Grid container spacing={3}>
         <Grid item xs={12}>
           <Typography variant="h6" id="tableTitle">
@@ -130,7 +184,7 @@ export default function TextFields({ ...props }) {
               InputLabelProps={{
                 shrink: true
               }}
-              value={values.codigo}
+              value={values.codigo === 0 ? "" : values.codigo}
               onChange={handleChange("codigo")}
             />
           </Grid>
@@ -202,23 +256,37 @@ export default function TextFields({ ...props }) {
             onChange={handleChange("preco")}
           />
         </Grid>
-        <Grid item xs={12}>
-          <Grid item xs={4}>
-            <TextField
-              id="estoque"
-              label="Estoque"
-              style={{ margin: 8 }}
-              placeholder="Estoque do produto"
-              helperText="Estoque do produto"
-              fullWidth
-              margin="normal"
-              InputLabelProps={{
-                shrink: true
-              }}
-              value={values.estoque}
-              onChange={handleChange("estoque")}
-            />
-          </Grid>
+        <Grid item xs={6}>
+          <TextField
+            id="estoque"
+            label="Estoque"
+            style={{ margin: 8 }}
+            placeholder="Estoque do produto"
+            helperText="Estoque do produto"
+            margin="normal"
+            fullWidth
+            InputLabelProps={{
+              shrink: true
+            }}
+            value={values.estoque}
+            onChange={handleChange("estoque")}
+          />
+        </Grid>
+        <Grid item xs={6}>
+          <TextField
+            id="quantidade vendida"
+            label="Quantidade vendida"
+            style={{ margin: 8 }}
+            placeholder="Quantidade vendida do produto"
+            helperText="Quantidade vendida do produto"
+            margin="normal"
+            fullWidth
+            InputLabelProps={{
+              shrink: true
+            }}
+            disabled
+            value={values.quantidadeVendida}
+          />
         </Grid>
         <Grid item xs={12}>
           <FormGroup row>

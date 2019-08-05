@@ -6,7 +6,6 @@ import TextField from "@material-ui/core/TextField";
 import Grid from "@material-ui/core/Grid";
 import Typography from "@material-ui/core/Typography";
 import Button from "@material-ui/core/Button";
-import SaveIcon from "@material-ui/icons/Save";
 import ThumbDownAltIcon from "@material-ui/icons/ThumbDownAlt";
 import ThumbUpAltIcon from "@material-ui/icons/ThumbUpAlt";
 import AddIcon from "@material-ui/icons/Add";
@@ -17,6 +16,9 @@ import Tab from "@material-ui/core/Tab";
 import FreeBreakfastIcon from "@material-ui/icons/FreeBreakfast";
 import GroupIcon from "@material-ui/icons/Group";
 import InfoIcon from "@material-ui/icons/Info";
+import ExposurePlus1Icon from "@material-ui/icons/ExposurePlus1";
+import ExposureNeg1Icon from "@material-ui/icons/ExposureNeg1";
+import MonetizationOnIcon from "@material-ui/icons/MonetizationOn";
 import Box from "@material-ui/core/Box";
 import Table from "@material-ui/core/Table";
 import TableBody from "@material-ui/core/TableBody";
@@ -26,6 +28,12 @@ import TableRow from "@material-ui/core/TableRow";
 import Chip from "@material-ui/core/Chip";
 import Tooltip from "@material-ui/core/Tooltip";
 import Fab from "@material-ui/core/Fab";
+import Snackbar from "@material-ui/core/Snackbar";
+import CustomAlert from "../../../components/CustomAlert/CustomAlert.jsx";
+import Dialog from "@material-ui/core/Dialog";
+import DialogActions from "@material-ui/core/DialogActions";
+import DialogContent from "@material-ui/core/DialogContent";
+import DialogTitle from "@material-ui/core/DialogTitle";
 
 import DataSelect from "../../../components/DataSelect/DataSelect.jsx";
 import { FormatarDinheiro } from "../../../utils";
@@ -96,7 +104,7 @@ const useStyles = makeStyles(theme => ({
   iconSmall: {
     fontSize: 20
   },
-  button: {
+  margin: {
     margin: theme.spacing(1)
   },
   colorBlack: {
@@ -108,6 +116,7 @@ export default function TextFields({ ...props }) {
   const classes = useStyles();
 
   const [tituloPagina, setTituloPagina] = React.useState("Cadastrar Comanda");
+  const [dialogOpen, setDialogOpen] = React.useState(false);
   const [values, setValues] = React.useState({
     grupo: [],
     produtos: [],
@@ -128,6 +137,15 @@ export default function TextFields({ ...props }) {
     produto: null,
     quantidade: 0,
     comanda: ""
+  });
+  const [optionsAlert, setOptionsAlert] = React.useState({
+    open: false,
+    message: "",
+    variant: "success"
+  });
+  const [clientePagar, setClientePagar] = React.useState({
+    clienteId: null,
+    valorPagar: 0
   });
 
   function subtotal() {
@@ -164,7 +182,7 @@ export default function TextFields({ ...props }) {
       const response = await ListarProdutos();
       let produtos = [];
       response.data.retorno.map(item => {
-        produtos.push({
+        return produtos.push({
           label: item.codigo + " - " + item.nome,
           value: item._id
         });
@@ -173,7 +191,7 @@ export default function TextFields({ ...props }) {
     };
 
     obterComanda();
-  }, []);
+  }, [props.match.params.comandaId, novoProdutoComanda.comanda]);
 
   const handleChange = name => event => {
     setValues({ ...values, [name]: event.target.value });
@@ -186,6 +204,17 @@ export default function TextFields({ ...props }) {
     });
   };
 
+  const handleChangeClientePagar = name => event => {
+    setClientePagar({
+      ...clientePagar,
+      [name]: event.target.value
+    });
+  };
+
+  function handleDialogClose() {
+    setDialogOpen(false);
+  }
+
   function handleChangetab(event, newValue) {
     setIndexTab(newValue);
   }
@@ -193,10 +222,6 @@ export default function TextFields({ ...props }) {
   const handleChangeComum = (name, nomeObjeto) => event => {
     if (nomeObjeto === "novoProduto")
       setNovoProdutoComanda({ ...novoProdutoComanda, [name]: event });
-  };
-
-  const handleChangeChecked = name => event => {
-    setValues({ ...values, [name]: event.target.checked });
   };
 
   const obterClienteChaveUnica = async e => {
@@ -215,6 +240,18 @@ export default function TextFields({ ...props }) {
     }
   };
 
+  function handleCloseAlert() {
+    setOptionsAlert({ ...optionsAlert, open: false });
+  }
+
+  function openAlert(variant, message) {
+    setOptionsAlert({
+      variant: variant,
+      message: message,
+      open: true
+    });
+  }
+
   const confirmarCriacaoComanda = async e => {
     e.preventDefault();
 
@@ -222,14 +259,17 @@ export default function TextFields({ ...props }) {
       const response = await CadastrarComanda({
         clienteId: clienteComanda._id
       });
-      console.log(response);
+
       if (response.data.sucesso) {
         props.history.push(
           "/admin/cadastrar/comanda/" + response.data.retorno._id
         );
         window.location.reload();
+      } else {
+        openAlert("warning", response.data.mensagem);
       }
     } catch (err) {
+      openAlert("error", "Solicitação inválida, tente novamente!");
       console.log("confirmarCriacaoComanda: ", err);
     }
   };
@@ -244,6 +284,7 @@ export default function TextFields({ ...props }) {
         nome: "",
         _id: null
       });
+      setChaveUnicaBusca("");
     } catch (err) {
       console.log("negarCriacaoComanda: ", err);
     }
@@ -255,9 +296,11 @@ export default function TextFields({ ...props }) {
     try {
       if (
         novoProdutoComanda.produto === null ||
-        novoProdutoComanda.quantidade == 0
-      )
+        novoProdutoComanda.quantidade === 0
+      ) {
+        openAlert("warning", "Preencha todos os campos!");
         return;
+      }
 
       const response = await AdicionarProdutoComanda({
         comandaId: novoProdutoComanda.comanda,
@@ -266,15 +309,82 @@ export default function TextFields({ ...props }) {
       });
 
       if (response.data.sucesso) {
-        console.log(response.data);
+        openAlert("success", "Produto adicionado com sucesso!");
+        AdicionarProdutoNaGrid(
+          response.data.retorno.produtosComanda.produtos,
+          response.data.retorno.valorTotal
+        );
+        //AtualizarGridGrupo(response.data.retorno.valorTotal);
+      } else {
+        openAlert("warning", response.data.mensagem);
       }
     } catch (err) {
+      openAlert("error", "Solicitação inválida, tente novamente!");
       console.log("adicionarItemComanda: ", err);
     }
   };
 
+  function AdicionarProdutoNaGrid(novosProdutos, valorTotal) {
+    setValues(prevState => {
+      return { ...prevState, produtos: novosProdutos };
+    });
+    setValues(prevState => {
+      return { ...prevState, valorTotal: valorTotal };
+    });
+  }
+
+  async function adicionarProdutoExistente(produtoId) {
+    try {
+      const response = await AdicionarProdutoComanda({
+        comandaId: novoProdutoComanda.comanda,
+        quantidade: 1,
+        produto: produtoId
+      });
+
+      if (response.data.sucesso) {
+        openAlert("success", "Produto adicionado com sucesso!");
+        AdicionarProdutoNaGrid(
+          response.data.retorno.produtosComanda.produtos,
+          response.data.retorno.valorTotal
+        );
+      } else {
+        openAlert("warning", response.data.mensagem);
+      }
+    } catch (err) {
+      openAlert("error", "Solicitação inválida, tente novamente!");
+      console.log("adicionarItemComanda: ", err);
+    }
+  }
+
+  async function retirarProdutoExistente(produto) {
+    console.log(produto);
+  }
+
+  async function fecharCliente(clienteId) {
+    setDialogOpen(true);
+
+    setClientePagar(prevState => {
+      return { ...prevState, clienteId: clienteId };
+    });
+  }
+
   return (
     <form className={classes.container} autoComplete="off">
+      <Snackbar
+        anchorOrigin={{
+          vertical: "top",
+          horizontal: "right"
+        }}
+        open={optionsAlert.open}
+        autoHideDuration={2000}
+        onClose={handleCloseAlert}
+      >
+        <CustomAlert
+          onClose={handleCloseAlert}
+          variant={optionsAlert.variant}
+          message={optionsAlert.message}
+        />
+      </Snackbar>
       <Grid container spacing={3}>
         <Grid item xs={12}>
           <Typography variant="h6" id="tableTitle">
@@ -343,7 +453,7 @@ export default function TextFields({ ...props }) {
                         {clienteComanda.chaveAmigavel}
                       </TableCell>
                       <TableCell align="right">
-                        <Tooltip title="Confirmar" className={classes.button}>
+                        <Tooltip title="Confirmar" className={classes.margin}>
                           <Fab
                             color="primary"
                             size="small"
@@ -359,7 +469,7 @@ export default function TextFields({ ...props }) {
                         </Tooltip>
                         <Tooltip
                           title="Negar"
-                          className={classes.button}
+                          className={classes.margin}
                           onClick={negarCriacaoComanda}
                         >
                           <Fab color="secondary" size="small">
@@ -418,7 +528,7 @@ export default function TextFields({ ...props }) {
                   InputLabelProps={{
                     shrink: true
                   }}
-                  value={values.valorTotal}
+                  value={FormatarDinheiro(values.valorTotal)}
                   onChange={handleChange("valorTotal")}
                 />
                 <TextField
@@ -468,14 +578,16 @@ export default function TextFields({ ...props }) {
                         <TableCell align="right">
                           {FormatarDinheiro(row.valorPago)}
                         </TableCell>
-                        <TableCell>
-                          {/* <Link to={`/admin/cadastrar/comanda/${dataItem._id}`}>
-                      <Tooltip title="Editar">
-                        <Fab color="primary" size="small">
-                          <Icon>edit_icon</Icon>
-                        </Fab>
-                      </Tooltip>
-                    </Link> */}
+                        <TableCell align="right">
+                          <Tooltip
+                            title="Fechar Cliente"
+                            onClick={() => fecharCliente(row._id)}
+                            className={classes.margin}
+                          >
+                            <Fab color="primary" size="small">
+                              <MonetizationOnIcon />
+                            </Fab>
+                          </Tooltip>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -568,14 +680,28 @@ export default function TextFields({ ...props }) {
                         <TableCell align="left">
                           {FormatarDinheiro(row.precoTotal)}
                         </TableCell>
-                        <TableCell>
-                          {/* <Link to={`/admin/cadastrar/comanda/${dataItem._id}`}>
-                      <Tooltip title="Editar">
-                        <Fab color="primary" size="small">
-                          <Icon>edit_icon</Icon>
-                        </Fab>
-                      </Tooltip>
-                    </Link> */}
+                        <TableCell align="right">
+                          <Tooltip
+                            title="Adicionar 1"
+                            onClick={() =>
+                              adicionarProdutoExistente(row.produto._id)
+                            }
+                            className={classes.margin}
+                          >
+                            <Fab color="primary" size="small">
+                              <ExposurePlus1Icon />
+                            </Fab>
+                          </Tooltip>
+
+                          <Tooltip
+                            title="Remover 1"
+                            onClick={() => retirarProdutoExistente(row)}
+                            className={classes.margin}
+                          >
+                            <Fab color="secondary" size="small">
+                              <ExposureNeg1Icon />
+                            </Fab>
+                          </Tooltip>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -585,6 +711,42 @@ export default function TextFields({ ...props }) {
             </Grid>
           ))}
       </Grid>
+      <Dialog
+        open={dialogOpen}
+        onClose={handleDialogClose}
+        aria-labelledby="form-dialog-title"
+      >
+        <DialogTitle id="form-dialog-title">Pagamento do cliente</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            id="name"
+            label="Valor a Pagar"
+            helperText="Valor que o cliente ira pagar"
+            type="number"
+            fullWidth
+            value={clientePagar.valorPagar}
+            onChange={handleChangeClientePagar("valorPagar")}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button
+            variant="contained"
+            onClick={handleDialogClose}
+            color="secondary"
+          >
+            Cancelar
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleDialogClose}
+            color="primary"
+          >
+            Pagar
+          </Button>
+        </DialogActions>
+      </Dialog>
     </form>
   );
 }

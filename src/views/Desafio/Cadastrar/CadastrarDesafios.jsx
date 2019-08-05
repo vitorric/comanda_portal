@@ -22,6 +22,8 @@ import StepLabel from "@material-ui/core/StepLabel";
 import StepContent from "@material-ui/core/StepContent";
 import Paper from "@material-ui/core/Paper";
 import { blackColor, whiteColor } from "assets/jss/material-dashboard-react";
+import Snackbar from "@material-ui/core/Snackbar";
+import CustomAlert from "../../../components/CustomAlert/CustomAlert.jsx";
 
 import DataSelect from "../../../components/DataSelect/DataSelect.jsx";
 
@@ -103,6 +105,7 @@ export default function TextFields({ ...props }) {
     descricao: "",
     status: true,
     emGrupo: false,
+    tempoEntrarNoAr: new Date(),
     tempoDuracao: null
   });
 
@@ -110,6 +113,11 @@ export default function TextFields({ ...props }) {
   const steps = getSteps();
 
   const [suggestions, setSuggestions] = React.useState([]);
+  const [optionsAlert, setOptionsAlert] = React.useState({
+    open: false,
+    message: "",
+    variant: "success"
+  });
 
   useEffect(() => {
     const obterDesafio = async () => {
@@ -124,25 +132,44 @@ export default function TextFields({ ...props }) {
 
         setObjetivo({
           quantidade: response.data.retorno.objetivo.quantidade,
-          produto: {
-            label:
-              response.data.retorno.objetivo.produto.codigo +
-              " - " +
-              response.data.retorno.objetivo.produto.nome,
-            value: response.data.retorno.objetivo.produto._id
-          }
+          produto: null
         });
 
-        setPremio({
-          quantidade: response.data.retorno.premio.quantidade,
-          produto: {
-            label:
-              response.data.retorno.premio.produto.codigo +
-              " - " +
-              response.data.retorno.premio.produto.nome,
-            value: response.data.retorno.premio.produto._id
-          }
-        });
+        if (typeof response.data.retorno.objetivo.produto !== "undefined") {
+          setObjetivo({
+            quantidade: response.data.retorno.objetivo.quantidade,
+            produto: {
+              label:
+                response.data.retorno.objetivo.produto.codigo +
+                " - " +
+                response.data.retorno.objetivo.produto.nome,
+              value: response.data.retorno.objetivo.produto._id
+            }
+          });
+        } else {
+          setObjetivo({
+            quantidade: response.data.retorno.objetivo.quantidade,
+            produto: null
+          });
+        }
+
+        if (typeof response.data.retorno.premio.produto !== "undefined") {
+          setPremio({
+            quantidade: response.data.retorno.premio.quantidade,
+            produto: {
+              label:
+                response.data.retorno.premio.produto.codigo +
+                " - " +
+                response.data.retorno.premio.produto.nome,
+              value: response.data.retorno.premio.produto._id
+            }
+          });
+        } else {
+          setPremio({
+            quantidade: response.data.retorno.premio.quantidade,
+            produto: null
+          });
+        }
 
         setTipoPremio(response.data.retorno.premio.tipo);
         setTipoObjetivo(response.data.retorno.objetivo.tipo);
@@ -160,7 +187,7 @@ export default function TextFields({ ...props }) {
       const response = await ListarProdutos();
       let produtos = [];
       response.data.retorno.map(item => {
-        produtos.push({
+        return produtos.push({
           label: item.codigo + " - " + item.nome,
           value: item._id
         });
@@ -169,7 +196,7 @@ export default function TextFields({ ...props }) {
     };
 
     obterDesafio();
-  }, []);
+  }, [props.match.params.desafioId]);
 
   function handleChangeRadioPremio(event) {
     setTipoPremio(event.target.value);
@@ -192,7 +219,7 @@ export default function TextFields({ ...props }) {
   };
 
   const handleChangeComum = (name, nomeObjeto) => event => {
-    if (nomeObjeto == "Objetivo") {
+    if (nomeObjeto === "Objetivo") {
       setObjetivo({ ...objetivo, [name]: event });
       return;
     }
@@ -217,27 +244,48 @@ export default function TextFields({ ...props }) {
     setActiveStep(prevActiveStep => prevActiveStep - 1);
   }
 
+  function handleCloseAlert() {
+    setOptionsAlert({ ...optionsAlert, open: false });
+  }
+
+  function openAlert(variant, message) {
+    setOptionsAlert({
+      variant: variant,
+      message: message,
+      open: true
+    });
+  }
+
   const salvarDesafio = async e => {
     try {
       e.preventDefault();
 
       if (typeof values._id === "undefined") {
+        let objPremio = {
+          tipo: tipoPremio,
+          quantidade: premio.quantidade
+        };
+
+        let objObjetivo = {
+          tipo: tipoObjetivo,
+          quantidade: objetivo.quantidade
+        };
+
+        if (tipoPremio === "Produto" && premio.produto !== null)
+          objPremio.produto = premio.produto.value;
+
+        if (tipoObjetivo === "Produto" && objetivo.produto !== null)
+          objObjetivo.produto = objetivo.produto.value;
+
         const response = await CadastrarDesafio({
           nome: values.nome,
           descricao: values.descricao,
           status: values.status,
           emGrupo: values.emGrupo,
           tempoDuracao: values.tempoDuracao,
-          premio: {
-            tipo: tipoPremio,
-            produto: premio.produto.value,
-            quantidade: premio.quantidade
-          },
-          objetivo: {
-            tipo: tipoObjetivo,
-            produto: objetivo.produto.value,
-            quantidade: objetivo.quantidade
-          }
+          tempoEntrarNoAr: values.tempoEntrarNoAr,
+          premio: objPremio,
+          objetivo: objObjetivo
         });
 
         if (response.data.sucesso) {
@@ -245,18 +293,29 @@ export default function TextFields({ ...props }) {
             "/admin/cadastrar/desafio/" + response.data.retorno._id
           );
           window.location.reload();
+        } else {
+          openAlert("warning", response.data.mensagem);
         }
+
         return;
       }
 
-      await AlterarDesafio({
+      const response = await AlterarDesafio({
         _id: values._id,
         nome: values.nome,
         descricao: values.descricao,
         status: values.status,
+        tempoEntrarNoAr: values.tempoEntrarNoAr,
         tempoDuracao: values.tempoDuracao
       });
+
+      if (response.data.sucesso) {
+        openAlert("success", "Registro alterado com sucesso!");
+      } else {
+        openAlert("warning", response.data.mensagem);
+      }
     } catch (err) {
+      openAlert("error", "Solicitação inválida, tente novamente!");
       console.log("salvarDesafio:", err);
     }
   };
@@ -267,6 +326,21 @@ export default function TextFields({ ...props }) {
       autoComplete="off"
       onSubmit={salvarDesafio}
     >
+      <Snackbar
+        anchorOrigin={{
+          vertical: "top",
+          horizontal: "right"
+        }}
+        open={optionsAlert.open}
+        autoHideDuration={2000}
+        onClose={handleCloseAlert}
+      >
+        <CustomAlert
+          onClose={handleCloseAlert}
+          variant={optionsAlert.variant}
+          message={optionsAlert.message}
+        />
+      </Snackbar>
       <Grid container spacing={3}>
         <Grid item xs={12}>
           <Typography variant="h6" id="tableTitle">
@@ -322,6 +396,23 @@ export default function TextFields({ ...props }) {
                           />
                         </Grid>
                         <Grid item xs={12}>
+                          <MuiPickersUtilsProvider
+                            utils={DateFnsUtils}
+                            locale={ptbrLocale}
+                          >
+                            <DateTimePicker
+                              variant="inline"
+                              label="Data para entrar no ar"
+                              style={{ margin: 8 }}
+                              value={values.tempoEntrarNoAr}
+                              required
+                              onChange={handleChangeComum(
+                                "tempoEntrarNoAr",
+                                "values"
+                              )}
+                              format="dd/MM/yyyy HH:mm"
+                            />
+                          </MuiPickersUtilsProvider>
                           <MuiPickersUtilsProvider
                             utils={DateFnsUtils}
                             locale={ptbrLocale}

@@ -25,7 +25,10 @@ const isHandlerEnabled = (config = {}) => {
 };
 const errorHandler = error => {
   if (isHandlerEnabled(error.config)) {
-    if (error.message.includes("401")) {
+    if (
+      error.message.includes("401") &&
+      window.location.href.indexOf("/login") === -1
+    ) {
       logout();
       window.location.href = "/login";
     }

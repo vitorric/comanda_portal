@@ -19,8 +19,6 @@ import CadastrarDesafios from "views/Desafio/Cadastrar/CadastrarDesafios.jsx";
 import ListarComanda from "views/Comanda/Listar/ListarComanda.jsx";
 import CadastrarComanda from "views/Comanda/Cadastrar/CadastrarComanda.jsx";
 
-import Teste from "views/Testes/Teste.jsx";
-
 const dashboardRoutes = [
   {
     path: "/dashboard",
@@ -93,14 +91,6 @@ const dashboardRoutes = [
     component: CadastrarDesafios,
     layout: "/admin",
     hidden: true
-  },
-  {
-    path: "/testes",
-    name: "testes",
-    icon: Grade,
-    component: Teste,
-    layout: "/admin",
-    hidden: false
   }
 ];
 
