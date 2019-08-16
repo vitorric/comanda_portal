@@ -14,6 +14,7 @@ import { whiteColor } from "assets/jss/material-dashboard-react.jsx";
 
 import Snackbar from "@material-ui/core/Snackbar";
 import CustomAlert from "../../../components/CustomAlert/CustomAlert.jsx";
+import CustomUpload from "../../../components/CustomUpload/CustomUpload.jsx";
 
 import {
   CadastrarProduto,
@@ -50,7 +51,7 @@ const useStyles = makeStyles(theme => ({
   }
 }));
 
-export default function TextFields({ ...props }) {
+export default function CadastrarProdutoView({ ...props }) {
   const classes = useStyles();
 
   const [tituloPagina, setTituloPagina] = React.useState("Cadastrar Produto");
@@ -115,7 +116,15 @@ export default function TextFields({ ...props }) {
       e.preventDefault();
 
       if (typeof values._id === "undefined") {
-        const response = await CadastrarProduto(values);
+        const response = await CadastrarProduto({
+          codigo: values.codigo,
+          nome: values.nome,
+          descricao: values.descricao,
+          custo: values.custo,
+          preco: values.preco,
+          estoque: values.estoque,
+          status: values.status ? 1 : 0
+        });
 
         if (response.data.sucesso) {
           props.history.push(
@@ -129,7 +138,16 @@ export default function TextFields({ ...props }) {
         return;
       }
 
-      const response = await AlterarProduto(values);
+      const response = await AlterarProduto({
+        _id: values._id,
+        codigo: values.codigo,
+        nome: values.nome,
+        descricao: values.descricao,
+        custo: values.custo,
+        preco: values.preco,
+        estoque: values.estoque,
+        status: values.status ? 1 : 0
+      });
 
       if (response.data.sucesso) {
         openAlert("success", "Registro alterado com sucesso!");
@@ -168,6 +186,15 @@ export default function TextFields({ ...props }) {
           <Typography variant="h6" id="tableTitle">
             {tituloPagina}
           </Typography>
+        </Grid>
+        <Grid item xs={12}>
+          {typeof values._id !== "undefined" && (
+            <CustomUpload
+              type="produto"
+              id={values._id}
+              imgAtual={values.icon}
+            />
+          )}
         </Grid>
         <Grid item xs={12}>
           <Grid item xs={1}>

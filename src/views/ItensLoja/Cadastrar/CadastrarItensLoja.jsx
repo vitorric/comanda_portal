@@ -16,6 +16,7 @@ import Snackbar from "@material-ui/core/Snackbar";
 import CustomAlert from "../../../components/CustomAlert/CustomAlert.jsx";
 
 import DataSelect from "../../../components/DataSelect/DataSelect.jsx";
+import CustomUpload from "../../../components/CustomUpload/CustomUpload.jsx";
 
 import {
   CadastrarItemLoja,
@@ -62,7 +63,7 @@ const useStyles = makeStyles(theme => ({
   }
 }));
 
-export default function TextFields({ ...props }) {
+export default function CadstrarItensLojaView({ ...props }) {
   const classes = useStyles();
 
   const [tituloPagina, setTituloPagina] = React.useState("Cadastrar Item Loja");
@@ -70,7 +71,7 @@ export default function TextFields({ ...props }) {
     produto: null,
     tempoEntrarNoAr: new Date(),
     tempoDisponivel: null,
-    icon: "",
+    icon: null,
     quantidadeVendida: 0,
     preco: 0,
     quantidadeDisponivel: 0,
@@ -161,11 +162,10 @@ export default function TextFields({ ...props }) {
           produto: values.produto.value,
           tempoDisponivel: values.tempoDisponivel,
           tempoEntrarNoAr: values.tempoEntrarNoAr,
-          icon: values.icon,
           quantidadeVendida: values.quantidadeVendida,
           preco: values.preco,
           quantidadeDisponivel: values.quantidadeDisponivel,
-          status: values.status,
+          status: values.status ? 1 : 0,
           nome: values.nome,
           descricao: values.descricao,
           hotSale: values.hotSale
@@ -187,11 +187,10 @@ export default function TextFields({ ...props }) {
         produto: values.produto.value,
         tempoDisponivel: values.tempoDisponivel,
         tempoEntrarNoAr: values.tempoEntrarNoAr,
-        icon: values.icon,
         quantidadeVendida: values.quantidadeVendida,
         preco: values.preco,
         quantidadeDisponivel: values.quantidadeDisponivel,
-        status: values.status,
+        status: values.status ? 1 : 0,
         nome: values.nome,
         descricao: values.descricao,
         hotSale: values.hotSale
@@ -234,6 +233,15 @@ export default function TextFields({ ...props }) {
           <Typography variant="h6" id="tableTitle">
             {tituloPagina}
           </Typography>
+        </Grid>
+        <Grid item xs={12}>
+          {typeof values._id !== "undefined" && (
+            <CustomUpload
+              type="item_loja"
+              id={values._id}
+              imgAtual={values.icon}
+            />
+          )}
         </Grid>
         <Grid item xs={12}>
           <Grid item xs={4}>

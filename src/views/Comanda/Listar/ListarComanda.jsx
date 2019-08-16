@@ -69,7 +69,7 @@ const headRows = [
     disablePadding: false,
     label: "Data de Fechamento"
   },
-  { id: "status", numeric: false, disablePadding: false, label: "Status" },
+  { id: "aberta", numeric: false, disablePadding: false, label: "Status" },
   { id: "acao", numeric: false, disablePadding: false, label: "Ação" }
 ];
 
@@ -175,7 +175,7 @@ const useStyles = makeStyles(theme => ({
   }
 }));
 
-export default function EnhancedTable() {
+export default function ListarComandaView() {
   const classes = useStyles();
   const [order, setOrder] = React.useState("asc");
   const [orderBy, setOrderBy] = React.useState("lider.nome");
@@ -286,10 +286,8 @@ export default function EnhancedTable() {
                       <TableCell>{dataItem.dataSaida}</TableCell>
                       <TableCell>
                         <Chip
-                          color={
-                            dataItem.status === 1 ? "primary" : "secondary"
-                          }
-                          label={dataItem.status === 1 ? "Aberta" : "Fechada"}
+                          color={dataItem.aberta ? "primary" : "secondary"}
+                          label={dataItem.aberta ? "Aberta" : "Fechada"}
                         />
                       </TableCell>
                       <TableCell className={classes.margin}>

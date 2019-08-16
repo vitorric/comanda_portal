@@ -26,6 +26,7 @@ import Snackbar from "@material-ui/core/Snackbar";
 import CustomAlert from "../../../components/CustomAlert/CustomAlert.jsx";
 
 import DataSelect from "../../../components/DataSelect/DataSelect.jsx";
+import CustomUpload from "../../../components/CustomUpload/CustomUpload.jsx";
 
 import {
   CadastrarDesafio,
@@ -81,7 +82,7 @@ function getSteps() {
   return ["Informações", "Objetivo", "Premio", "Finalizar"];
 }
 
-export default function TextFields({ ...props }) {
+export default function CadastrarDesafioView({ ...props }) {
   const classes = useStyles();
 
   const [tituloPagina, setTituloPagina] = React.useState("Cadastrar Desafio");
@@ -101,6 +102,7 @@ export default function TextFields({ ...props }) {
   });
 
   const [values, setValues] = React.useState({
+    icon: null,
     nome: "",
     descricao: "",
     status: true,
@@ -280,7 +282,7 @@ export default function TextFields({ ...props }) {
         const response = await CadastrarDesafio({
           nome: values.nome,
           descricao: values.descricao,
-          status: values.status,
+          status: values.status ? 1 : 0,
           emGrupo: values.emGrupo,
           tempoDuracao: values.tempoDuracao,
           tempoEntrarNoAr: values.tempoEntrarNoAr,
@@ -304,7 +306,7 @@ export default function TextFields({ ...props }) {
         _id: values._id,
         nome: values.nome,
         descricao: values.descricao,
-        status: values.status,
+        status: values.status ? 1 : 0,
         tempoEntrarNoAr: values.tempoEntrarNoAr,
         tempoDuracao: values.tempoDuracao
       });
@@ -360,6 +362,13 @@ export default function TextFields({ ...props }) {
                         elevation={0}
                         className={classes.resetContainer}
                       >
+                        {typeof values._id !== "undefined" && (
+                          <CustomUpload
+                            type="desafio"
+                            id={values._id}
+                            imgAtual={values.icon}
+                          />
+                        )}
                         <Grid item xs={12}>
                           <TextField
                             required

@@ -8,6 +8,10 @@ export const AlterarDesafio = desafio => {
   return API.post("alterar/desafio", desafio);
 };
 
+export const AlterarDesafioStatus = desafio => {
+  return API.post("alterar/desafio/status", desafio);
+};
+
 export const ObterDesafio = desafioId => {
   return API.post("obter/desafio", desafioId);
 };

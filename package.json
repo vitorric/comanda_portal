@@ -1,7 +1,7 @@
 {
-  "name": "material-dashboard-react",
-  "version": "1.7.0",
-  "description": "Material Dashboard React. Coded by Creative Tim",
+  "name": "cpg",
+  "version": "1.0.0",
+  "description": "Portal da Comanda Gameficada CPG",
   "private": false,
   "main": "dist/index.js",
   "dependencies": {
@@ -14,14 +14,17 @@
     "chartist": "0.10.1",
     "classnames": "2.2.6",
     "date-fns": "^2.0.0-beta.2",
+    "form-data": "^2.5.0",
     "history": "4.9.0",
     "md5": "^2.2.1",
     "perfect-scrollbar": "1.4.0",
     "prop-types": "15.7.2",
+    "qrcode.react": "^0.9.3",
     "react": "16.8.6",
     "react-autosuggest": "^9.4.3",
     "react-chartist": "0.13.3",
     "react-dom": "16.8.6",
+    "react-dropzone": "^10.1.7",
     "react-google-maps": "9.4.5",
     "react-router-dom": "5.0.1",
     "react-scripts": "3.0.1",
@@ -35,21 +38,11 @@
     "eject": "react-scripts eject",
     "install:clean": "rm -rf node_modules/ && rm -rf package-lock.json && npm install && npm start",
     "lint:check": "eslint . --ext=js,jsx;  exit 0",
-    "lint:fix": "eslint . --ext=js,jsx --fix;  exit 0",
-    "build-package-css": "cp src/assets/css/material-dashboard-react.css dist/material-dashboard-react.css",
-    "build-package": "npm run build-package-css && babel src --out-dir dist"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/creativetimofficial/material-dashboard-react.git"
+    "lint:fix": "eslint . --ext=js,jsx --fix;  exit 0"
   },
   "keywords": [],
-  "author": "Creative Tim <hello@creative-tim.com> (https://www.creative-tim.com/)",
+  "author": "Vitor Ricardo",
   "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/creativetimofficial/material-dashboard-react/issues"
-  },
-  "homepage": "https://creativetimofficial.github.io/material-dashboard-react/#/dashboard",
   "optionalDependencies": {
     "@types/googlemaps": "3.36.4",
     "@types/markerclustererplus": "2.1.33",

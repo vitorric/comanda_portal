@@ -16,14 +16,23 @@ import DeleteIcon from "@material-ui/icons/Delete";
 import AddIcon from "@material-ui/icons/Add";
 import Fab from "@material-ui/core/Fab";
 import Icon from "@material-ui/core/Icon";
+import VisibilityIcon from "@material-ui/icons/Visibility";
+import VisibilityOffIcon from "@material-ui/icons/VisibilityOff";
 import TextField from "@material-ui/core/TextField";
 import Grid from "@material-ui/core/Grid";
 import Chip from "@material-ui/core/Chip";
 import Snackbar from "@material-ui/core/Snackbar";
 import CustomAlert from "../../../components/CustomAlert/CustomAlert.jsx";
+import Button from "@material-ui/core/Button";
+import Dialog from "@material-ui/core/Dialog";
+import DialogActions from "@material-ui/core/DialogActions";
+import DialogTitle from "@material-ui/core/DialogTitle";
 
 import { Link } from "react-router-dom";
-import { ListarItensLoja } from "../../../services/api/itensLoja";
+import {
+  ListarItensLoja,
+  AlterarItemLojaStatus
+} from "../../../services/api/itensLoja";
 
 function desc(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -183,7 +192,7 @@ const useStyles = makeStyles(theme => ({
   }
 }));
 
-export default function EnhancedTable() {
+export default function ListarItensLojaView() {
   const classes = useStyles();
   const [order, setOrder] = React.useState("asc");
   const [orderBy, setOrderBy] = React.useState("nome");
@@ -192,6 +201,7 @@ export default function EnhancedTable() {
   const [data, setData] = React.useState([]);
   const [dataBackup, setDataBackup] = React.useState([]);
   const [emptyRows, setEmptyRows] = React.useState(0);
+  const [dialogOpen, setDialogOpen] = React.useState(false);
   const [optionsAlert, setOptionsAlert] = React.useState({
     open: false,
     message: "",
@@ -246,10 +256,39 @@ export default function EnhancedTable() {
     });
   }
 
-  const inativarItem = async e => {
-    e.preventDefault();
-    openAlert("success", "funcionou");
-  };
+  async function excluirItem(dataId, index) {
+    console.log(dataId, index);
+    setDialogOpen(true);
+  }
+
+  async function inativarItem(dataId) {
+    const index = dataBackup.findIndex(
+      x => x._id.toString() === dataId.toString()
+    );
+
+    dataBackup[index].status = dataBackup[index].status === 1 ? 0 : 1;
+
+    const response = await AlterarItemLojaStatus({
+      itemId: dataId,
+      status: dataBackup[index].status
+    });
+
+    if (response.data.sucesso) {
+      openAlert("success", "Registro alterado com sucesso!");
+
+      setData(
+        dataBackup.filter(item => {
+          return item;
+        })
+      );
+    } else {
+      openAlert("warning", response.data.mensagem);
+    }
+  }
+
+  function handleDialogClose() {
+    setDialogOpen(false);
+  }
 
   return (
     <div className={classes.root}>
@@ -347,8 +386,23 @@ export default function EnhancedTable() {
                           </Tooltip>
                         </Link>
                         <Tooltip
+                          title={
+                            dataItem.status === true ? "Inativar" : "Ativar"
+                          }
+                          onClick={() => inativarItem(dataItem._id)}
+                          className={classes.margin}
+                        >
+                          <Fab color="default" size="small">
+                            {dataItem.status ? (
+                              <VisibilityIcon />
+                            ) : (
+                              <VisibilityOffIcon />
+                            )}
+                          </Fab>
+                        </Tooltip>
+                        <Tooltip
                           title="Excluir"
-                          onClick={inativarItem}
+                          onClick={() => excluirItem(dataItem._id, index)}
                           className={classes.margin}
                         >
                           <Fab color="secondary" size="small">
@@ -383,6 +437,29 @@ export default function EnhancedTable() {
           onChangeRowsPerPage={handleChangeRowsPerPage}
         />
       </Paper>
+      <Dialog
+        open={dialogOpen}
+        onClose={handleDialogClose}
+        aria-labelledby="form-dialog-title"
+      >
+        <DialogTitle id="form-dialog-title">Confirma exclusão?</DialogTitle>
+        <DialogActions>
+          <Button
+            variant="contained"
+            onClick={handleDialogClose}
+            color="secondary"
+          >
+            Cancelar
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleDialogClose}
+            color="primary"
+          >
+            Excluir
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }

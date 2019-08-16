@@ -41,7 +41,8 @@ import { FormatarDinheiro } from "../../../utils";
 import {
   ObterComanda,
   CadastrarComanda,
-  AdicionarProdutoComanda
+  AdicionarProdutoComanda,
+  ClientePagarComanda
 } from "../../../services/api/comanda";
 
 import { ObterClienteChaveUnica } from "../../../services/api/cliente";
@@ -112,7 +113,7 @@ const useStyles = makeStyles(theme => ({
   }
 }));
 
-export default function TextFields({ ...props }) {
+export default function CadastrarComandaView({ ...props }) {
   const classes = useStyles();
 
   const [tituloPagina, setTituloPagina] = React.useState("Cadastrar Comanda");
@@ -122,7 +123,9 @@ export default function TextFields({ ...props }) {
     produtos: [],
     valorTotal: 0,
     createdAt: "",
-    status: true
+    status: true,
+    dataSaida: "",
+    aberta: false
   });
   const [chaveUnicaBusca, setChaveUnicaBusca] = React.useState("");
   const [clienteComanda, setClienteComanda] = React.useState({
@@ -193,10 +196,6 @@ export default function TextFields({ ...props }) {
     obterComanda();
   }, [props.match.params.comandaId, novoProdutoComanda.comanda]);
 
-  const handleChange = name => event => {
-    setValues({ ...values, [name]: event.target.value });
-  };
-
   const handleChangeNovoProduto = name => event => {
     setNovoProdutoComanda({
       ...novoProdutoComanda,
@@ -209,6 +208,26 @@ export default function TextFields({ ...props }) {
       ...clientePagar,
       [name]: event.target.value
     });
+  };
+
+  const hangleClientePagar = async e => {
+    e.preventDefault();
+    console.log(clientePagar.clienteId)
+    try {
+      const response = await ClientePagarComanda({
+        clienteId: clientePagar.clienteId,
+        comandaId: values._id,
+        valorPago: clientePagar.valorPagar
+      });
+
+      if (response.data.sucesso) {
+        window.location.reload();
+      } else {
+        openAlert("warning", response.data.mensagem);
+      }
+    } catch (err) {
+      console.log("hangleClientePagar: ", err);
+    }
   };
 
   function handleDialogClose() {
@@ -234,6 +253,8 @@ export default function TextFields({ ...props }) {
 
       if (response.data.sucesso) {
         setClienteComanda(response.data.retorno);
+      } else {
+        openAlert("warning", response.data.mensagem);
       }
     } catch (err) {
       console.log("obterClienteChaveUnica: ", err);
@@ -529,7 +550,6 @@ export default function TextFields({ ...props }) {
                     shrink: true
                   }}
                   value={FormatarDinheiro(values.valorTotal)}
-                  onChange={handleChange("valorTotal")}
                 />
                 <TextField
                   id="createdAt"
@@ -545,7 +565,21 @@ export default function TextFields({ ...props }) {
                     shrink: true
                   }}
                   value={values.createdAt}
-                  onChange={handleChange("createdAt")}
+                />
+                <TextField
+                  id="dataSaida"
+                  label="Data de Fechamento"
+                  style={{ margin: 8 }}
+                  className={classes.colorBlack}
+                  placeholder="Ainda não foi fechada!"
+                  helperText="Data em que a comanda foi fechada"
+                  fullWidth
+                  disabled
+                  margin="normal"
+                  InputLabelProps={{
+                    shrink: true
+                  }}
+                  value={values.dataSaida === null ? "" : values.dataSaida}
                 />
               </TabPanel>
               <TabPanel value={indexTab} index={1} className={classes.tabPanel}>
@@ -579,24 +613,28 @@ export default function TextFields({ ...props }) {
                           {FormatarDinheiro(row.valorPago)}
                         </TableCell>
                         <TableCell align="right">
-                          <Tooltip
-                            title="Fechar Cliente"
-                            onClick={() => fecharCliente(row._id)}
-                            className={classes.margin}
-                          >
-                            <Fab color="primary" size="small">
-                              <MonetizationOnIcon />
-                            </Fab>
-                          </Tooltip>
+                          {row.jaPagou ? (
+                            ""
+                          ) : (
+                            <Tooltip
+                              title="Fechar Cliente"
+                              onClick={() => fecharCliente(row.cliente._id)}
+                              className={classes.margin}
+                            >
+                              <Fab color="primary" size="small">
+                                <MonetizationOnIcon />
+                              </Fab>
+                            </Tooltip>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}
 
                     <TableRow>
                       <TableCell rowSpan={3} />
-                      <TableCell colSpan={3}>Subtotal</TableCell>
+                      <TableCell colSpan={3}>Valor Total</TableCell>
                       <TableCell align="left">
-                        {FormatarDinheiro(subtotal())}
+                        {FormatarDinheiro(values.valorTotal)}
                       </TableCell>
                     </TableRow>
                     <TableRow>
@@ -608,57 +646,63 @@ export default function TextFields({ ...props }) {
                     <TableRow>
                       <TableCell colSpan={3}>Total Restante</TableCell>
                       <TableCell align="left">
-                        {FormatarDinheiro(values.valorTotal)}
+                        {FormatarDinheiro(subtotal())}
                       </TableCell>
                     </TableRow>
                   </TableBody>
                 </Table>
               </TabPanel>
               <TabPanel value={indexTab} index={2} className={classes.tabPanel}>
-                <Grid item xs={12}>
-                  <Grid item xs={4}>
-                    <DataSelect
-                      label="Adicionar novo Produto"
-                      placeholder="Selecione um produto para adicionar na comanda"
-                      onChange={handleChangeComum("produto", "novoProduto")}
-                      value={novoProdutoComanda.produto}
-                    >
-                      {suggestions}
-                    </DataSelect>
-                  </Grid>
-                </Grid>
-                <Grid item xs={12}>
-                  <Grid item xs={2}>
-                    <TextField
-                      id="quantidade"
-                      label="Quantidade"
-                      style={{ margin: 8 }}
-                      className={classes.colorBlack}
-                      placeholder="Quantidade"
-                      helperText="Quantidade a ser adicionada"
-                      fullWidth
-                      margin="normal"
-                      InputLabelProps={{
-                        shrink: true
-                      }}
-                      value={novoProdutoComanda.quantidade}
-                      onChange={handleChangeNovoProduto("quantidade")}
-                    />
-                  </Grid>
-                </Grid>
-                <Grid item xs={12}>
-                  <Button
-                    variant="contained"
-                    type="submit"
-                    color="primary"
-                    onClick={adicionarItemComanda}
-                  >
-                    <AddIcon
-                      className={clsx(classes.leftIcon, classes.iconSmall)}
-                    />
-                    Adicionar
-                  </Button>
-                </Grid>
+                {values.aberta ? (
+                  <div>
+                    <Grid item xs={12}>
+                      <Grid item xs={4}>
+                        <DataSelect
+                          label="Adicionar novo Produto"
+                          placeholder="Selecione um produto para adicionar na comanda"
+                          onChange={handleChangeComum("produto", "novoProduto")}
+                          value={novoProdutoComanda.produto}
+                        >
+                          {suggestions}
+                        </DataSelect>
+                      </Grid>
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Grid item xs={2}>
+                        <TextField
+                          id="quantidade"
+                          label="Quantidade"
+                          style={{ margin: 8 }}
+                          className={classes.colorBlack}
+                          placeholder="Quantidade"
+                          helperText="Quantidade a ser adicionada"
+                          fullWidth
+                          margin="normal"
+                          InputLabelProps={{
+                            shrink: true
+                          }}
+                          value={novoProdutoComanda.quantidade}
+                          onChange={handleChangeNovoProduto("quantidade")}
+                        />
+                      </Grid>
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Button
+                        variant="contained"
+                        type="submit"
+                        color="primary"
+                        onClick={adicionarItemComanda}
+                      >
+                        <AddIcon
+                          className={clsx(classes.leftIcon, classes.iconSmall)}
+                        />
+                        Adicionar
+                      </Button>
+                    </Grid>
+                  </div>
+                ) : (
+                  ""
+                )}
                 <Table>
                   <TableHead>
                     <TableRow>
@@ -681,27 +725,34 @@ export default function TextFields({ ...props }) {
                           {FormatarDinheiro(row.precoTotal)}
                         </TableCell>
                         <TableCell align="right">
-                          <Tooltip
-                            title="Adicionar 1"
-                            onClick={() =>
-                              adicionarProdutoExistente(row.produto._id)
-                            }
-                            className={classes.margin}
-                          >
-                            <Fab color="primary" size="small">
-                              <ExposurePlus1Icon />
-                            </Fab>
-                          </Tooltip>
-
-                          <Tooltip
-                            title="Remover 1"
-                            onClick={() => retirarProdutoExistente(row)}
-                            className={classes.margin}
-                          >
-                            <Fab color="secondary" size="small">
-                              <ExposureNeg1Icon />
-                            </Fab>
-                          </Tooltip>
+                          {values.aberta ? (
+                            <Tooltip
+                              title="Adicionar 1"
+                              onClick={() =>
+                                adicionarProdutoExistente(row.produto._id)
+                              }
+                              className={classes.margin}
+                            >
+                              <Fab color="primary" size="small">
+                                <ExposurePlus1Icon />
+                              </Fab>
+                            </Tooltip>
+                          ) : (
+                            ""
+                          )}{" "}
+                          {values.aberta ? (
+                            <Tooltip
+                              title="Remover 1"
+                              onClick={() => retirarProdutoExistente(row)}
+                              className={classes.margin}
+                            >
+                              <Fab color="secondary" size="small">
+                                <ExposureNeg1Icon />
+                              </Fab>
+                            </Tooltip>
+                          ) : (
+                            ""
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -740,7 +791,7 @@ export default function TextFields({ ...props }) {
           </Button>
           <Button
             variant="contained"
-            onClick={handleDialogClose}
+            onClick={hangleClientePagar}
             color="primary"
           >
             Pagar

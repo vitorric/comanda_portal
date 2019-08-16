@@ -15,3 +15,7 @@ export const ObterComanda = comandaId => {
 export const ListarComandas = () => {
   return API.post("listar/comandas");
 };
+
+export const ClientePagarComanda = infoPagamento => {
+  return API.post("cliente/pagar/comanda", infoPagamento);
+};

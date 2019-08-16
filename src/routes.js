@@ -3,6 +3,7 @@ import Shop from "@material-ui/icons/Shop";
 import ListAlt from "@material-ui/icons/ListAlt";
 import FreeBreakfast from "@material-ui/icons/FreeBreakfast";
 import Grade from "@material-ui/icons/Grade";
+import Settings from "@material-ui/icons/Settings";
 
 // core components/views for Admin layout
 import DashboardPage from "views/Dashboard/Dashboard.jsx";
@@ -18,6 +19,8 @@ import CadastrarDesafios from "views/Desafio/Cadastrar/CadastrarDesafios.jsx";
 
 import ListarComanda from "views/Comanda/Listar/ListarComanda.jsx";
 import CadastrarComanda from "views/Comanda/Cadastrar/CadastrarComanda.jsx";
+
+import Configuracao from "views/Configuracao/Configuracao.jsx";
 
 const dashboardRoutes = [
   {
@@ -91,6 +94,14 @@ const dashboardRoutes = [
     component: CadastrarDesafios,
     layout: "/admin",
     hidden: true
+  },
+  {
+    path: "/configuracao",
+    name: "Configuração",
+    icon: Settings,
+    component: Configuracao,
+    layout: "/admin",
+    hidden: false
   }
 ];
 

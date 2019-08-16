@@ -8,6 +8,10 @@ export const AlterarItemLoja = itemLoja => {
   return API.post("alterar/itemLoja", itemLoja);
 };
 
+export const AlterarItemLojaStatus = item => {
+  return API.post("alterar/itemLoja/status", item);
+};
+
 export const ObterItemLoja = itemId => {
   return API.post("obter/itemLoja", itemId);
 };

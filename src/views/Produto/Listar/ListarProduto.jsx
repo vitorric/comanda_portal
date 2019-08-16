@@ -16,11 +16,17 @@ import DeleteIcon from "@material-ui/icons/Delete";
 import AddIcon from "@material-ui/icons/Add";
 import Fab from "@material-ui/core/Fab";
 import Icon from "@material-ui/core/Icon";
+import VisibilityIcon from "@material-ui/icons/Visibility";
+import VisibilityOffIcon from "@material-ui/icons/VisibilityOff";
 import TextField from "@material-ui/core/TextField";
 import Grid from "@material-ui/core/Grid";
 import Chip from "@material-ui/core/Chip";
 import Snackbar from "@material-ui/core/Snackbar";
 import CustomAlert from "../../../components/CustomAlert/CustomAlert.jsx";
+import Button from "@material-ui/core/Button";
+import Dialog from "@material-ui/core/Dialog";
+import DialogActions from "@material-ui/core/DialogActions";
+import DialogTitle from "@material-ui/core/DialogTitle";
 
 import { Link } from "react-router-dom";
 import { ListarProdutos } from "../../../services/api/produto";
@@ -173,7 +179,7 @@ const useStyles = makeStyles(theme => ({
   }
 }));
 
-export default function EnhancedTable() {
+export default function ListarProdutoView() {
   const classes = useStyles();
   const [order, setOrder] = React.useState("asc");
   const [orderBy, setOrderBy] = React.useState("nome");
@@ -182,6 +188,7 @@ export default function EnhancedTable() {
   const [products, setProducts] = React.useState([]);
   const [productsBackup, setProductsBackup] = React.useState([]);
   const [emptyRows, setEmptyRows] = React.useState(0);
+  const [dialogOpen, setDialogOpen] = React.useState(false);
   const [optionsAlert, setOptionsAlert] = React.useState({
     open: false,
     message: "",
@@ -234,6 +241,27 @@ export default function EnhancedTable() {
     setOptionsAlert({ ...optionsAlert, open: false });
   }
 
+  async function excluirProduto(produtoId, index) {
+    console.log(produtoId, index);
+    setDialogOpen(true);
+  }
+
+  async function inativarProduto(produtoId, status, index) {
+    productsBackup[index].status = !productsBackup[index].status;
+
+    setProducts(
+      productsBackup.filter(item => {
+        return item;
+      })
+    );
+
+    openAlert("warning", "test");
+  }
+
+  function handleDialogClose() {
+    setDialogOpen(false);
+  }
+
   function openAlert(variant, message) {
     setOptionsAlert({
       variant: variant,
@@ -241,11 +269,6 @@ export default function EnhancedTable() {
       open: true
     });
   }
-
-  const inativarProduto = async e => {
-    e.preventDefault();
-    openAlert("success", "funcionou");
-  };
 
   return (
     <div className={classes.root}>
@@ -326,8 +349,8 @@ export default function EnhancedTable() {
                       <TableCell align="right">{product.estoque}</TableCell>
                       <TableCell>
                         <Chip
-                          color={product.status === 1 ? "primary" : "secondary"}
-                          label={product.status === 1 ? "Ativo" : "Inativo"}
+                          color={product.status ? "primary" : "secondary"}
+                          label={product.status ? "Ativo" : "Inativo"}
                         />
                       </TableCell>
                       <TableCell>
@@ -342,8 +365,25 @@ export default function EnhancedTable() {
                           </Tooltip>
                         </Link>
                         <Tooltip
+                          title={
+                            product.status === true ? "Inativar" : "Ativar"
+                          }
+                          onClick={() =>
+                            inativarProduto(product._id, product.status, index)
+                          }
+                          className={classes.margin}
+                        >
+                          <Fab color="default" size="small">
+                            {product.status ? (
+                              <VisibilityIcon />
+                            ) : (
+                              <VisibilityOffIcon />
+                            )}
+                          </Fab>
+                        </Tooltip>
+                        <Tooltip
                           title="Excluir"
-                          onClick={inativarProduto}
+                          onClick={() => excluirProduto(product._id, index)}
                           className={classes.margin}
                         >
                           <Fab color="secondary" size="small">
@@ -378,6 +418,29 @@ export default function EnhancedTable() {
           onChangeRowsPerPage={handleChangeRowsPerPage}
         />
       </Paper>
+      <Dialog
+        open={dialogOpen}
+        onClose={handleDialogClose}
+        aria-labelledby="form-dialog-title"
+      >
+        <DialogTitle id="form-dialog-title">Confirma exclusão?</DialogTitle>
+        <DialogActions>
+          <Button
+            variant="contained"
+            onClick={handleDialogClose}
+            color="secondary"
+          >
+            Cancelar
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleDialogClose}
+            color="primary"
+          >
+            Excluir
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }
