@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Component } from "react";
 // nodejs library to set properties for components
 import PropTypes from "prop-types";
 import classNames from "classnames";
@@ -19,7 +19,7 @@ import Button from "components/CustomButtons/Button.jsx";
 
 import headerLinksStyle from "assets/jss/material-dashboard-react/components/headerLinksStyle.jsx";
 
-class AdminNavbarLinks extends React.Component {
+class AdminNavbarLinks extends Component {
   state = {
     openProfile: false
   };
@@ -32,6 +32,18 @@ class AdminNavbarLinks extends React.Component {
     }
     this.setState({ openProfile: false });
   };
+
+  handleGoToProfile = () => {
+    this.setState({ openProfile: false });
+    window.location = "/admin/configuracao";
+  };
+
+  handleLogout = () => {
+    this.setState({ openProfile: false });
+    localStorage.clear();
+    window.location = "/admin/login";
+  };
+
   render() {
     const { classes } = this.props;
     const { openNotifcation, openProfile } = this.state;
@@ -79,23 +91,17 @@ class AdminNavbarLinks extends React.Component {
                   <ClickAwayListener onClickAway={this.handleCloseProfile}>
                     <MenuList role="menu">
                       <MenuItem
-                        onClick={this.handleCloseProfile}
+                        onClick={this.handleGoToProfile}
                         className={classes.dropdownItem}
                       >
-                        Profile
-                      </MenuItem>
-                      <MenuItem
-                        onClick={this.handleCloseProfile}
-                        className={classes.dropdownItem}
-                      >
-                        Settings
+                        Configuração
                       </MenuItem>
                       <Divider light />
                       <MenuItem
-                        onClick={this.handleCloseProfile}
+                        onClick={this.handleLogout}
                         className={classes.dropdownItem}
                       >
-                        Logout
+                        Sair
                       </MenuItem>
                     </MenuList>
                   </ClickAwayListener>
