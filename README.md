@@ -5,7 +5,7 @@
 Este é um portal administativo desenvolvido em ReactJS.
 
 ## Preparação
-Antes de iniciar, é necessário iniciar a API, pois sem ela, o aplicativo não irá funcionar. Acesse  [aqui](https://github.com/vitorric/comanda_api) e siga os passos.
+Antes de iniciar, é necessário iniciar a API, pois sem ela, o portal não irá funcionar. Acesse  [aqui](https://github.com/vitorric/comanda_api) e siga os passos.
 
 ## Estrutura de pasta
 
