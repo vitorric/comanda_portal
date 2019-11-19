@@ -6,6 +6,8 @@ import { Router, Route, Switch, Redirect } from "react-router-dom";
 // core components
 import Admin from "layouts/Admin.jsx";
 import Login from "layouts/Login.jsx";
+import RecuperarSenha from "layouts/RecuperarSenha.jsx";
+import TermosUso from "layouts/TermosUso.jsx";
 
 //auth
 import { isAuthenticated } from "./services/auth";
@@ -52,6 +54,11 @@ ReactDOM.render(
     <Switch>
       <PrivateRoute path="/admin" component={Admin} />
       <PublicRoute path="/login" component={Login} />
+      <PublicRoute
+        path="/alterar_senha/:token/:email"
+        component={RecuperarSenha}
+      />
+      <PublicRoute path="/termouso" component={TermosUso} />
       <Redirect from="/" to="/login" />
     </Switch>
   </Router>,

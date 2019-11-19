@@ -38,7 +38,7 @@ const Sidebar = ({ ...props }) => {
   function activeRoute(routeName) {
     return window.location.href.indexOf(routeName) > -1 ? true : false;
   }
-  const { classes, color, logo, image, logoText, routes } = props;
+  const { classes, color, logo, logoText, routes } = props;
   var links = (
     <List className={classes.list}>
       {routes.map((prop, key) => {
@@ -95,12 +95,10 @@ const Sidebar = ({ ...props }) => {
     <div className={classes.logo}>
       <a
         href="/admin/dashboard"
-        className={classNames(classes.logoLink, {
-          [classes.logoLinkRTL]: props.rtlActive
-        })}
+        className={classNames(classes.logoLink)}
       >
         <div className={classes.logoImage}>
-          <img src={logo} alt="logo" className={classes.img} />
+          <img src={logo} alt="logo" className={classes.img}/>
         </div>
         {logoText}
       </a>
@@ -110,13 +108,10 @@ const Sidebar = ({ ...props }) => {
     <div>
       <Hidden mdUp implementation="css">
         <Drawer
-          variant="temporary"
-          anchor={props.rtlActive ? "left" : "right"}
+          anchor="left"
           open={props.open}
           classes={{
-            paper: classNames(classes.drawerPaper, {
-              [classes.drawerPaperRTL]: props.rtlActive
-            })
+            paper: classNames(classes.drawerPaper)
           }}
           onClose={props.handleDrawerToggle}
           ModalProps={{
@@ -125,36 +120,22 @@ const Sidebar = ({ ...props }) => {
         >
           {brand}
           <div className={classes.sidebarWrapper}>
-            {props.rtlActive ? <RTLNavbarLinks /> : <AdminNavbarLinks />}
+            <AdminNavbarLinks />
             {links}
           </div>
-          {image !== undefined ? (
-            <div
-              className={classes.background}
-              style={{ backgroundImage: "url(" + image + ")" }}
-            />
-          ) : null}
         </Drawer>
       </Hidden>
       <Hidden smDown implementation="css">
         <Drawer
-          anchor={props.rtlActive ? "right" : "left"}
+          anchor="left"
           variant="permanent"
           open
           classes={{
-            paper: classNames(classes.drawerPaper, {
-              [classes.drawerPaperRTL]: props.rtlActive
-            })
+            paper: classNames(classes.drawerPaper, classes["gray"])
           }}
         >
           {brand}
           <div className={classes.sidebarWrapper}>{links}</div>
-          {image !== undefined ? (
-            <div
-              className={classes.background}
-              style={{ backgroundColor: "mooron" }}
-            />
-          ) : null}
         </Drawer>
       </Hidden>
     </div>
@@ -165,9 +146,8 @@ Sidebar.propTypes = {
   classes: PropTypes.object.isRequired,
   rtlActive: PropTypes.bool,
   handleDrawerToggle: PropTypes.func,
-  bgColor: PropTypes.oneOf(["purple", "blue", "green", "orange", "red"]),
+  bgColor: PropTypes.oneOf(["purple", "blue", "green", "orange", "red", "gray"]),
   logo: PropTypes.string,
-  image: PropTypes.string,
   logoText: PropTypes.string,
   routes: PropTypes.arrayOf(PropTypes.object),
   open: PropTypes.bool

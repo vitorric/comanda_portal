@@ -32,8 +32,7 @@ import routes from "routes.js";
 
 import dashboardStyle from "assets/jss/material-dashboard-react/layouts/dashboardStyle.jsx";
 
-import image from "assets/img/sidebar-2.jpg";
-import logo from "assets/img/reactlogo.png";
+import logo from "assets/img/logo.png";
 
 import { isAuthenticated } from "../services/auth";
 
@@ -74,7 +73,6 @@ const switchRoutes = (
 
 class Dashboard extends React.Component {
   state = {
-    image: image,
     color: "blue",
     hasImage: true,
     fixedClasses: "dropdown show",
@@ -119,9 +117,7 @@ class Dashboard extends React.Component {
       <div className={classes.wrapper}>
         <Sidebar
           routes={routes}
-          logoText={"CPG"}
           logo={logo}
-          image={this.state.image}
           handleDrawerToggle={this.handleDrawerToggle}
           open={this.state.mobileOpen}
           color={this.state.color}

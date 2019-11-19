@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import Avatar from "@material-ui/core/Avatar";
 import Button from "@material-ui/core/Button";
 import CssBaseline from "@material-ui/core/CssBaseline";
@@ -12,8 +12,8 @@ import Snackbar from "@material-ui/core/Snackbar";
 import CustomAlert from "../components/CustomAlert/CustomAlert.jsx";
 
 //Comunicao com API
-import { LoginEstabelecimento } from "../services/api/login";
-import { login } from "../services/auth";
+import { AlterarSenhaApp } from "../services/api/cliente";
+import { login, logout } from "../services/auth";
 import md5 from "md5";
 
 function SubTitulo() {
@@ -49,17 +49,22 @@ const useStyles = makeStyles(theme => ({
   }
 }));
 
-export default function SignIn(props) {
+export default function RecuperarSenha(props) {
   const classes = useStyles();
 
   const [values, setValues] = React.useState({
-    email: "",
-    password: ""
+    password: "",
+    confirmarPassword: ""
   });
   const [optionsAlert, setOptionsAlert] = React.useState({
     open: false,
     message: "",
     variant: "success"
+  });
+
+  const [info, setInfo] = React.useState({
+    email: "",
+    token: ""
   });
 
   const handleChange = name => event => {
@@ -78,33 +83,53 @@ export default function SignIn(props) {
     });
   }
 
-  const handleLogin = async e => {
+  useEffect(() => {
+    const checarParametros = () => {
+      if (
+        typeof props.match.params.token === "undefined" ||
+        typeof props.match.params.email === "undefined"
+      ) {
+        props.history.push("/login");
+        return;
+      }
+
+      setInfo({
+        token: props.match.params.token,
+        email: props.match.params.email
+      });
+    };
+
+    checarParametros();
+  }, [props.history, props.match.params.token, props.match.params.email]);
+
+  const handleRecuperarSenha = async e => {
     e.preventDefault();
 
-    const { email, password } = values;
+    if (values.password !== values.confirmarPassword) {
+      openAlert("warning", "Senhas não conferem!");
+      return;
+    }
 
-    if (!email || !password) {
-      openAlert("warning", "Preencha o email e a senha!");
-    } else {
-      try {
-        const response = await LoginEstabelecimento({
-          email,
-          password: md5(password)
-        });
+    try {
+      login(info.token, "");
 
-        if (response.data.sucesso) {
-          login(
-            response.data.retorno.token,
-            JSON.stringify(response.data.retorno.estabelecimento)
-          );
-          props.history.push("/admin");
-          return;
-        }
+      const response = await AlterarSenhaApp({
+        email: info.email,
+        token: info.token,
+        novaSenha: md5(values.password)
+      });
 
-        openAlert("warning", response.data.mensagem);
-      } catch (err) {
-        openAlert("error", "Solicitação inválida, tente novamente!");
+      if (response.data.sucesso) {
+        openAlert("success", "Senha alterada com sucesso!");
+        logout();
+        return;
       }
+
+      logout();
+      openAlert("warning", response.data.mensagem);
+    } catch (err) {
+      logout();
+      openAlert("error", "Solicitação inválida, tente novamente!");
     }
   };
 
@@ -131,34 +156,34 @@ export default function SignIn(props) {
           <LockOutlinedIcon />
         </Avatar>
         <Typography component="h1" variant="h5">
-          Acesse sua conta
+          Altere sua senha do aplicativo!
         </Typography>
-        <form className={classes.form} noValidate onSubmit={handleLogin}>
-          <TextField
-            variant="outlined"
-            margin="normal"
-            required
-            fullWidth
-            id="email"
-            label="Email"
-            name="email"
-            autoComplete="email"
-            autoFocus
-            value={values.email}
-            onChange={handleChange("email")}
-          />
+        <form className={classes.form} noValidate onSubmit={handleRecuperarSenha}>
           <TextField
             variant="outlined"
             margin="normal"
             required
             fullWidth
             name="password"
-            label="Senha"
+            label="Nova Senha"
             type="password"
             id="password"
             autoComplete="current-password"
             value={values.password}
             onChange={handleChange("password")}
+          />
+          <TextField
+            variant="outlined"
+            margin="normal"
+            required
+            fullWidth
+            name="confirmarPassword"
+            label="Confirmar Nova Senha"
+            type="password"
+            id="confirmarPassword"
+            autoComplete="current-password"
+            value={values.confirmarPassword}
+            onChange={handleChange("confirmarPassword")}
           />
           <Button
             type="submit"
@@ -167,7 +192,7 @@ export default function SignIn(props) {
             color="primary"
             className={classes.submit}
           >
-            Entrar
+            alterar senha
           </Button>
           {/* <Grid container direction="row" justify="center" alignItems="center">
             <LinkUI href="#" variant="body2">

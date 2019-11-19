@@ -38,3 +38,15 @@ export const UploadItemLojaIcon = (itemLojaId, file) => {
     }
   });
 };
+
+export const UploadEstabelecimentoIcon = file => {
+  let data = new FormData();
+  data.set("file", file, file.fileName);
+
+  return API.post("upload/estabelecimento/icon", data, {
+    headers: {
+      accept: "application/json",
+      "Content-Type": `multipart/form-data; boundary=${data._boundary}`
+    }
+  });
+};

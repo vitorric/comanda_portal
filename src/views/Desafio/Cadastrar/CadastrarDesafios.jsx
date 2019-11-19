@@ -9,21 +9,21 @@ import FormGroup from "@material-ui/core/FormGroup";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import Button from "@material-ui/core/Button";
 import SaveIcon from "@material-ui/icons/Save";
-import ArrowBack from "@material-ui/icons/ArrowBack";
-import ArrowForward from "@material-ui/icons/ArrowForward";
 import DateFnsUtils from "@date-io/date-fns";
 import RadioGroup from "@material-ui/core/RadioGroup";
 import Radio from "@material-ui/core/Radio";
 import { MuiPickersUtilsProvider, DateTimePicker } from "@material-ui/pickers";
 import ptbrLocale from "date-fns/locale/pt-BR";
-import Stepper from "@material-ui/core/Stepper";
-import Step from "@material-ui/core/Step";
-import StepLabel from "@material-ui/core/StepLabel";
-import StepContent from "@material-ui/core/StepContent";
-import Paper from "@material-ui/core/Paper";
+import AppBar from "@material-ui/core/AppBar";
+import Tabs from "@material-ui/core/Tabs";
+import Tab from "@material-ui/core/Tab";
+import InfoIcon from "@material-ui/icons/Info";
+import RedeemIcon from "@material-ui/icons/Redeem";
+import FlagIcon from "@material-ui/icons/Flag";
 import { blackColor, whiteColor } from "assets/jss/material-dashboard-react";
 import Snackbar from "@material-ui/core/Snackbar";
 import CustomAlert from "../../../components/CustomAlert/CustomAlert.jsx";
+import Box from "@material-ui/core/Box";
 
 import DataSelect from "../../../components/DataSelect/DataSelect.jsx";
 import CustomUpload from "../../../components/CustomUpload/CustomUpload.jsx";
@@ -78,8 +78,28 @@ const useStyles = makeStyles(theme => ({
   }
 }));
 
-function getSteps() {
-  return ["Informações", "Objetivo", "Premio", "Finalizar"];
+function a11yProps(index) {
+  return {
+    id: `scrollable-force-tab-${index}`,
+    "aria-controls": `scrollable-force-tabpanel-${index}`
+  };
+}
+
+function TabPanel(props) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <Typography
+      component="div"
+      role="tabpanel"
+      hidden={value !== index}
+      id={`scrollable-force-tabpanel-${index}`}
+      aria-labelledby={`scrollable-force-tab-${index}`}
+      {...other}
+    >
+      <Box p={3}>{children}</Box>
+    </Typography>
+  );
 }
 
 export default function CadastrarDesafioView({ ...props }) {
@@ -88,6 +108,7 @@ export default function CadastrarDesafioView({ ...props }) {
   const [tituloPagina, setTituloPagina] = React.useState("Cadastrar Desafio");
   const [tipoPremio, setTipoPremio] = React.useState("CPGold");
   const [tipoObjetivo, setTipoObjetivo] = React.useState("Dinheiro");
+  const [indexTab, setIndexTab] = React.useState(0);
 
   const [premio, setPremio] = React.useState({
     tipo: "CPGold",
@@ -110,9 +131,6 @@ export default function CadastrarDesafioView({ ...props }) {
     tempoEntrarNoAr: new Date(),
     tempoDuracao: null
   });
-
-  const [activeStep, setActiveStep] = React.useState(0);
-  const steps = getSteps();
 
   const [suggestions, setSuggestions] = React.useState([]);
   const [optionsAlert, setOptionsAlert] = React.useState({
@@ -208,6 +226,10 @@ export default function CadastrarDesafioView({ ...props }) {
     setPremio({ ...premio, [name]: event.target.value });
   };
 
+  function handleChangetab(event, newValue) {
+    setIndexTab(newValue);
+  }
+
   const handleChangeObjetivo = name => event => {
     setObjetivo({ ...objetivo, [name]: event.target.value });
   };
@@ -238,14 +260,6 @@ export default function CadastrarDesafioView({ ...props }) {
     setValues({ ...values, [name]: event.target.checked });
   };
 
-  function handleNext() {
-    setActiveStep(prevActiveStep => prevActiveStep + 1);
-  }
-
-  function handleBack() {
-    setActiveStep(prevActiveStep => prevActiveStep - 1);
-  }
-
   function handleCloseAlert() {
     setOptionsAlert({ ...optionsAlert, open: false });
   }
@@ -261,6 +275,17 @@ export default function CadastrarDesafioView({ ...props }) {
   const salvarDesafio = async e => {
     try {
       e.preventDefault();
+
+      if (
+        values.nome === "" ||
+        values.descricao === "" ||
+        values.tempoDuracao === null ||
+        premio.quantidade === 0 ||
+        objetivo.quantidade === 0
+      ) {
+        openAlert("warning", "Preencha todos os campos!");
+        return;
+      }
 
       if (typeof values._id === "undefined") {
         let objPremio = {
@@ -350,386 +375,287 @@ export default function CadastrarDesafioView({ ...props }) {
           </Typography>
         </Grid>
         <Grid item xs={12}>
-          <div className={classes.root}>
-            <Stepper activeStep={activeStep} orientation="vertical">
-              {steps.map((label, index) => (
-                <Step key={label}>
-                  <StepLabel>{label}</StepLabel>
-                  <StepContent>
-                    {(index === 0 && (
-                      <Paper
-                        square
-                        elevation={0}
-                        className={classes.resetContainer}
-                      >
-                        {typeof values._id !== "undefined" && (
-                          <CustomUpload
-                            type="desafio"
-                            id={values._id}
-                            imgAtual={values.icon}
-                          />
-                        )}
-                        <Grid item xs={12}>
-                          <TextField
-                            required
-                            id="nome"
-                            label="Nome"
-                            style={{ margin: 8 }}
-                            placeholder="Nome"
-                            helperText="Nome"
-                            fullWidth
-                            margin="normal"
-                            InputLabelProps={{
-                              shrink: true
-                            }}
-                            value={values.nome}
-                            onChange={handleChange("nome")}
-                          />
-                        </Grid>
-                        <Grid item xs={12}>
-                          <TextField
-                            id="descricao"
-                            label="Descrição"
-                            style={{ margin: 8 }}
-                            placeholder="Descrição"
-                            helperText="Descrição"
-                            fullWidth
-                            multiline
-                            rows="4"
-                            margin="normal"
-                            InputLabelProps={{
-                              shrink: true
-                            }}
-                            value={values.descricao}
-                            onChange={handleChange("descricao")}
-                          />
-                        </Grid>
-                        <Grid item xs={12}>
-                          <MuiPickersUtilsProvider
-                            utils={DateFnsUtils}
-                            locale={ptbrLocale}
-                          >
-                            <DateTimePicker
-                              variant="inline"
-                              label="Data para entrar no ar"
-                              style={{ margin: 8 }}
-                              value={values.tempoEntrarNoAr}
-                              required
-                              onChange={handleChangeComum(
-                                "tempoEntrarNoAr",
-                                "values"
-                              )}
-                              format="dd/MM/yyyy HH:mm"
-                            />
-                          </MuiPickersUtilsProvider>
-                          <MuiPickersUtilsProvider
-                            utils={DateFnsUtils}
-                            locale={ptbrLocale}
-                          >
-                            <DateTimePicker
-                              variant="inline"
-                              label="Disponível Até"
-                              style={{ margin: 8 }}
-                              value={values.tempoDuracao}
-                              required
-                              onChange={handleChangeComum(
-                                "tempoDuracao",
-                                "values"
-                              )}
-                              format="dd/MM/yyyy HH:mm"
-                            />
-                          </MuiPickersUtilsProvider>
-                        </Grid>
-                        <Grid item xs={12}>
-                          <FormGroup row>
-                            <FormControlLabel
-                              control={
-                                <Checkbox
-                                  style={{ margin: 8 }}
-                                  checked={values.status}
-                                  onChange={handleChangeChecked("status")}
-                                  value="status"
-                                  color="primary"
-                                />
-                              }
-                              label="Ativo"
-                            />
-                          </FormGroup>
-                        </Grid>
-                      </Paper>
-                    )) ||
-                      (index === 1 && (
-                        <Paper
-                          square
-                          elevation={0}
-                          className={classes.resetContainer}
-                        >
-                          <Grid item xs={12}>
-                            <FormGroup row>
-                              <FormControlLabel
-                                control={
-                                  <Checkbox
-                                    style={{ margin: 8 }}
-                                    checked={values.emGrupo}
-                                    onChange={handleChangeChecked("emGrupo")}
-                                    value="emGrupo"
-                                    color="primary"
-                                    disabled={values._id ? true : false}
-                                  />
-                                }
-                                label="Em Grupo"
-                              />
-                            </FormGroup>
-                          </Grid>
-                          <Grid item xs={12}>
-                            <RadioGroup
-                              aria-label="position"
-                              name="position"
-                              value={tipoObjetivo}
-                              onChange={handleChangeRadioObjetivo}
-                              row
-                              style={{ margin: 8 }}
-                            >
-                              <FormControlLabel
-                                value="Dinheiro"
-                                control={
-                                  <Radio
-                                    disabled={values._id ? true : false}
-                                    color="primary"
-                                  />
-                                }
-                                label="Dinheiro"
-                                labelPlacement="end"
-                              />
-                              <FormControlLabel
-                                value="Produto"
-                                control={
-                                  <Radio
-                                    disabled={values._id ? true : false}
-                                    color="primary"
-                                  />
-                                }
-                                label="Produto"
-                                labelPlacement="end"
-                              />
-                            </RadioGroup>
-                          </Grid>
+          <AppBar position="static" color="default">
+            <Tabs
+              value={indexTab}
+              onChange={handleChangetab}
+              variant="scrollable"
+              scrollButtons="on"
+              indicatorColor="primary"
+              textColor="primary"
+              aria-label="scrollable force tabs example"
+            >
+              <Tab label="INFORMAÇÕES" icon={<InfoIcon />} {...a11yProps(0)} />
+              <Tab label="OBJETIVO" icon={<FlagIcon />} {...a11yProps(1)} />
+              <Tab label="PRÊMIO" icon={<RedeemIcon />} {...a11yProps(2)} />
+            </Tabs>
+          </AppBar>
+          <TabPanel value={indexTab} index={0} className={classes.tabPanel}>
+            {typeof values._id !== "undefined" && (
+              <CustomUpload
+                type="desafio"
+                id={values._id}
+                imgAtual={values.icon}
+              />
+            )}
+            <Grid item xs={12}>
+              <TextField
+                id="nome"
+                label="Nome"
+                style={{ margin: 8 }}
+                placeholder="Nome"
+                helperText="Nome"
+                fullWidth
+                margin="normal"
+                InputLabelProps={{
+                  shrink: true
+                }}
+                value={values.nome}
+                onChange={handleChange("nome")}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                id="descricao"
+                label="Descrição"
+                style={{ margin: 8 }}
+                placeholder="Descrição"
+                helperText="Descrição"
+                fullWidth
+                multiline
+                rows="4"
+                margin="normal"
+                InputLabelProps={{
+                  shrink: true
+                }}
+                value={values.descricao}
+                onChange={handleChange("descricao")}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <MuiPickersUtilsProvider utils={DateFnsUtils} locale={ptbrLocale}>
+                <DateTimePicker
+                  variant="inline"
+                  label="Data para entrar no ar"
+                  style={{ margin: 8 }}
+                  value={values.tempoEntrarNoAr}
+                  onChange={handleChangeComum("tempoEntrarNoAr", "values")}
+                  format="dd/MM/yyyy HH:mm"
+                />
+              </MuiPickersUtilsProvider>
+              <MuiPickersUtilsProvider utils={DateFnsUtils} locale={ptbrLocale}>
+                <DateTimePicker
+                  variant="inline"
+                  label="Disponível Até"
+                  style={{ margin: 8 }}
+                  value={values.tempoDuracao}
+                  onChange={handleChangeComum("tempoDuracao", "values")}
+                  format="dd/MM/yyyy HH:mm"
+                />
+              </MuiPickersUtilsProvider>
+            </Grid>
+            <Grid item xs={12}>
+              <FormGroup row>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      style={{ margin: 8 }}
+                      checked={values.status}
+                      onChange={handleChangeChecked("status")}
+                      value="status"
+                      color="primary"
+                    />
+                  }
+                  label="Ativo"
+                />
+              </FormGroup>
+            </Grid>
+          </TabPanel>
+          <TabPanel value={indexTab} index={1} className={classes.tabPanel}>
+            <Grid item xs={12}>
+              <FormGroup row>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      style={{ margin: 8 }}
+                      checked={values.emGrupo}
+                      onChange={handleChangeChecked("emGrupo")}
+                      value="emGrupo"
+                      color="primary"
+                      disabled={values._id ? true : false}
+                    />
+                  }
+                  label="Em Grupo"
+                />
+              </FormGroup>
+            </Grid>
+            <Grid item xs={12}>
+              <RadioGroup
+                aria-label="position"
+                name="position"
+                value={tipoObjetivo}
+                onChange={handleChangeRadioObjetivo}
+                row
+                style={{ margin: 8 }}
+              >
+                <FormControlLabel
+                  value="Dinheiro"
+                  control={
+                    <Radio
+                      disabled={values._id ? true : false}
+                      color="primary"
+                    />
+                  }
+                  label="Dinheiro"
+                  labelPlacement="end"
+                />
+                <FormControlLabel
+                  value="Produto"
+                  control={
+                    <Radio
+                      disabled={values._id ? true : false}
+                      color="primary"
+                    />
+                  }
+                  label="Produto"
+                  labelPlacement="end"
+                />
+              </RadioGroup>
+            </Grid>
 
-                          <Grid item xs={12}>
-                            <Grid item xs={4}>
-                              <TextField
-                                id="objetivoDinheiro"
-                                label={
-                                  tipoObjetivo === "Produto"
-                                    ? "Quantidade de produtos"
-                                    : "Quantidade em dinheiro"
-                                }
-                                style={{ margin: 8 }}
-                                placeholder={
-                                  tipoObjetivo === "Produto"
-                                    ? "Quantidade de produtos"
-                                    : "Quantidade em dinheiro"
-                                }
-                                helperText={
-                                  tipoObjetivo === "Produto"
-                                    ? "Quantidade de produtos a serem comprados"
-                                    : "Quantidade de dinheiro a ser gasto"
-                                }
-                                fullWidth
-                                type="number"
-                                margin="normal"
-                                InputLabelProps={{
-                                  shrink: true
-                                }}
-                                required
-                                disabled={values._id ? true : false}
-                                value={objetivo.quantidade}
-                                onChange={handleChangeObjetivo("quantidade")}
-                              />
-                            </Grid>
-                          </Grid>
+            <Grid item xs={12}>
+              <Grid item xs={4}>
+                <TextField
+                  id="objetivoDinheiro"
+                  label={
+                    tipoObjetivo === "Produto"
+                      ? "Quantidade de produtos"
+                      : "Quantidade em dinheiro"
+                  }
+                  style={{ margin: 8 }}
+                  placeholder={
+                    tipoObjetivo === "Produto"
+                      ? "Quantidade de produtos"
+                      : "Quantidade em dinheiro"
+                  }
+                  helperText={
+                    tipoObjetivo === "Produto"
+                      ? "Quantidade de produtos a serem comprados"
+                      : "Quantidade de dinheiro a ser gasto"
+                  }
+                  fullWidth
+                  type="number"
+                  margin="normal"
+                  InputLabelProps={{
+                    shrink: true
+                  }}
+                  disabled={values._id ? true : false}
+                  value={objetivo.quantidade}
+                  onChange={handleChangeObjetivo("quantidade")}
+                />
+              </Grid>
+            </Grid>
 
-                          {tipoObjetivo === "Produto" && (
-                            <Grid item xs={12}>
-                              <Grid item xs={4}>
-                                <DataSelect
-                                  label="Produto"
-                                  placeholder="Selecione um produto de referência"
-                                  onChange={handleChangeComum(
-                                    "produto",
-                                    "Objetivo"
-                                  )}
-                                  disabled={values._id ? true : false}
-                                  value={objetivo.produto}
-                                >
-                                  {suggestions}
-                                </DataSelect>
-                              </Grid>
-                            </Grid>
-                          )}
-                        </Paper>
-                      )) ||
-                      (index === 2 && (
-                        <Paper
-                          square
-                          elevation={0}
-                          className={classes.resetContainer}
-                        >
-                          <Grid item xs={12}>
-                            <RadioGroup
-                              aria-label="position"
-                              name="position"
-                              value={tipoPremio}
-                              onChange={handleChangeRadioPremio}
-                              row
-                              style={{ margin: 8 }}
-                            >
-                              <FormControlLabel
-                                value="CPGold"
-                                control={
-                                  <Radio
-                                    disabled={values._id ? true : false}
-                                    color="primary"
-                                  />
-                                }
-                                label="CPGold"
-                                labelPlacement="end"
-                              />
-                              <FormControlLabel
-                                value="Produto"
-                                control={
-                                  <Radio
-                                    disabled={values._id ? true : false}
-                                    color="primary"
-                                  />
-                                }
-                                label="Produto"
-                                labelPlacement="end"
-                              />
-                            </RadioGroup>
-                          </Grid>
+            {tipoObjetivo === "Produto" && (
+              <Grid item xs={12}>
+                <Grid item xs={4}>
+                  <DataSelect
+                    label="Produto"
+                    placeholder="Selecione um produto de referência"
+                    onChange={handleChangeComum("produto", "Objetivo")}
+                    disabled={values._id ? true : false}
+                    value={objetivo.produto}
+                  >
+                    {suggestions}
+                  </DataSelect>
+                </Grid>
+              </Grid>
+            )}
+          </TabPanel>
+          <TabPanel value={indexTab} index={2} className={classes.tabPanel}>
+            <Grid item xs={12}>
+              <RadioGroup
+                aria-label="position"
+                name="position"
+                value={tipoPremio}
+                onChange={handleChangeRadioPremio}
+                row
+                style={{ margin: 8 }}
+              >
+                <FormControlLabel
+                  value="CPGold"
+                  control={
+                    <Radio
+                      disabled={values._id ? true : false}
+                      color="primary"
+                    />
+                  }
+                  label="CPGold"
+                  labelPlacement="end"
+                />
+                <FormControlLabel
+                  value="Produto"
+                  control={
+                    <Radio
+                      disabled={values._id ? true : false}
+                      color="primary"
+                    />
+                  }
+                  label="Produto"
+                  labelPlacement="end"
+                />
+              </RadioGroup>
+            </Grid>
 
-                          <Grid item xs={12}>
-                            <Grid item xs={4}>
-                              <TextField
-                                id="premioGold"
-                                label={
-                                  tipoPremio === "Produto"
-                                    ? "Quantidade"
-                                    : "CPGold"
-                                }
-                                style={{ margin: 8 }}
-                                placeholder={
-                                  tipoPremio === "Produto"
-                                    ? "Quantidade"
-                                    : "Prêmio em CPGold"
-                                }
-                                helperText={
-                                  tipoPremio === "Produto"
-                                    ? "Quantidade de produtos"
-                                    : "Prêmio em CPGold"
-                                }
-                                fullWidth
-                                type="number"
-                                margin="normal"
-                                InputLabelProps={{
-                                  shrink: true
-                                }}
-                                required
-                                disabled={values._id ? true : false}
-                                value={premio.quantidade}
-                                onChange={handleChangePremio("quantidade")}
-                              />
-                            </Grid>
-                          </Grid>
+            <Grid item xs={12}>
+              <Grid item xs={4}>
+                <TextField
+                  id="premioGold"
+                  label={tipoPremio === "Produto" ? "Quantidade" : "CPGold"}
+                  style={{ margin: 8 }}
+                  placeholder={
+                    tipoPremio === "Produto" ? "Quantidade" : "Prêmio em CPGold"
+                  }
+                  helperText={
+                    tipoPremio === "Produto"
+                      ? "Quantidade de produtos"
+                      : "Prêmio em CPGold"
+                  }
+                  fullWidth
+                  type="number"
+                  margin="normal"
+                  InputLabelProps={{
+                    shrink: true
+                  }}
+                  disabled={values._id ? true : false}
+                  value={premio.quantidade}
+                  onChange={handleChangePremio("quantidade")}
+                />
+              </Grid>
+            </Grid>
 
-                          {tipoPremio === "Produto" && (
-                            <Grid item xs={12}>
-                              <Grid item xs={4}>
-                                <DataSelect
-                                  label="Produto"
-                                  placeholder="Selecione um produto de referência"
-                                  onChange={handleChangeComum(
-                                    "produto",
-                                    "Premio"
-                                  )}
-                                  disabled={values._id ? true : false}
-                                  value={premio.produto}
-                                >
-                                  {suggestions}
-                                </DataSelect>
-                              </Grid>
-                            </Grid>
-                          )}
-                        </Paper>
-                      )) ||
-                      (index === 3 && (
-                        <Paper
-                          square
-                          elevation={0}
-                          className={classes.resetContainer}
-                        >
-                          <Typography variant="h6" id="tableTitle">
-                            {!values._id
-                              ? `Atenção: Ao cadastrar um desafio, o objetivo e o
-                            prêmio não poderão ser alterados!`
-                              : `Alterar Informações`}
-                          </Typography>
-                        </Paper>
-                      ))}
-                    <div className={classes.actionsContainer}>
-                      <Button
-                        disabled={activeStep === 0}
-                        onClick={handleBack}
-                        className={classes.button}
-                        variant="contained"
-                        color="secondary"
-                      >
-                        <ArrowBack
-                          className={clsx(classes.leftIcon, classes.iconSmall)}
-                        />
-                        Voltar
-                      </Button>
-
-                      {index < 3 && (
-                        <Button
-                          variant="contained"
-                          color="primary"
-                          onClick={handleNext}
-                          className={classes.button}
-                        >
-                          <ArrowForward
-                            className={clsx(
-                              classes.leftIcon,
-                              classes.iconSmall
-                            )}
-                          />
-                          Próximo
-                        </Button>
-                      )}
-
-                      {index === 3 && (
-                        <Button
-                          variant="contained"
-                          type="submit"
-                          color="primary"
-                          className={classes.button}
-                        >
-                          <SaveIcon
-                            className={clsx(
-                              classes.leftIcon,
-                              classes.iconSmall
-                            )}
-                          />
-                          Salvar
-                        </Button>
-                      )}
-                    </div>
-                  </StepContent>
-                </Step>
-              ))}
-            </Stepper>
-          </div>
+            {tipoPremio === "Produto" && (
+              <Grid item xs={12}>
+                <Grid item xs={4}>
+                  <DataSelect
+                    label="Produto"
+                    placeholder="Selecione um produto de referência"
+                    onChange={handleChangeComum("produto", "Premio")}
+                    disabled={values._id ? true : false}
+                    value={premio.produto}
+                  >
+                    {suggestions}
+                  </DataSelect>
+                </Grid>
+              </Grid>
+            )}
+          </TabPanel>
+        </Grid>
+        <Grid item xs={12}>
+          <Button variant="contained" type="submit" color="primary">
+            <SaveIcon className={clsx(classes.leftIcon, classes.iconSmall)} />
+            Salvar
+          </Button>
         </Grid>
       </Grid>
     </form>

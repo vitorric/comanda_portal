@@ -1,6 +1,7 @@
 import Dashboard from "@material-ui/icons/Dashboard";
 import Shop from "@material-ui/icons/Shop";
 import ListAlt from "@material-ui/icons/ListAlt";
+import CardGiftcard from "@material-ui/icons/CardGiftcard";
 import FreeBreakfast from "@material-ui/icons/FreeBreakfast";
 import Grade from "@material-ui/icons/Grade";
 import Settings from "@material-ui/icons/Settings";
@@ -19,6 +20,8 @@ import CadastrarDesafios from "views/Desafio/Cadastrar/CadastrarDesafios.jsx";
 
 import ListarComanda from "views/Comanda/Listar/ListarComanda.jsx";
 import CadastrarComanda from "views/Comanda/Cadastrar/CadastrarComanda.jsx";
+
+import PremioCompras from "views/PremioCompras/Listar/PremioCompras.jsx";
 
 import Configuracao from "views/Configuracao/Configuracao.jsx";
 
@@ -46,6 +49,13 @@ const dashboardRoutes = [
     component: CadastrarComanda,
     layout: "/admin",
     hidden: true
+  },
+  {
+    path: "/listar/premios/compras",
+    name: "Prêmios e Compras",
+    icon: CardGiftcard,
+    component: PremioCompras,
+    layout: "/admin"
   },
   {
     path: "/listar/produto",

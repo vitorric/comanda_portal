@@ -211,24 +211,46 @@ const sidebarStyle = theme => ({
     }
   },
   blue: {
-    backgroundColor: infoColor[0],
+    backgroundColor: infoColor[2],
     boxShadow:
       "0 12px 20px -10px rgba(" +
-      hexToRgb(infoColor[0]) +
+      hexToRgb(infoColor[2]) +
       ",.28), 0 4px 20px 0 rgba(" +
       hexToRgb(blackColor) +
       ",.12), 0 7px 8px -5px rgba(" +
-      hexToRgb(infoColor[0]) +
+      hexToRgb(infoColor[2]) +
       ",.2)",
     "&:hover,&:focus": {
-      backgroundColor: infoColor[0],
+      backgroundColor: infoColor[2],
       boxShadow:
         "0 12px 20px -10px rgba(" +
-        hexToRgb(infoColor[0]) +
+        hexToRgb(infoColor[2]) +
         ",.28), 0 4px 20px 0 rgba(" +
         hexToRgb(blackColor) +
         ",.12), 0 7px 8px -5px rgba(" +
-        hexToRgb(infoColor[0]) +
+        hexToRgb(infoColor[2]) +
+        ",.2)"
+    }
+  },
+  gray: {
+    backgroundColor: grayColor[2],
+    boxShadow:
+      "0 12px 20px -10px rgba(" +
+      hexToRgb(grayColor[2]) +
+      ",.28), 0 4px 20px 0 rgba(" +
+      hexToRgb(blackColor) +
+      ",.12), 0 7px 8px -5px rgba(" +
+      hexToRgb(grayColor[2]) +
+      ",.2)",
+    "&:hover,&:focus": {
+      backgroundColor: grayColor[2],
+      boxShadow:
+        "0 12px 20px -10px rgba(" +
+        hexToRgb(grayColor[2]) +
+        ",.28), 0 4px 20px 0 rgba(" +
+        hexToRgb(blackColor) +
+        ",.12), 0 7px 8px -5px rgba(" +
+        hexToRgb(grayColor[2]) +
         ",.2)"
     }
   },

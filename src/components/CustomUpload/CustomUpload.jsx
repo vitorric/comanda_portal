@@ -12,7 +12,8 @@ import CustomAlert from "../CustomAlert/CustomAlert.jsx";
 import {
   UploadDesafioIcon,
   UploadItemLojaIcon,
-  UploadProdutoIcon
+  UploadProdutoIcon,
+  UploadEstabelecimentoIcon
 } from "../../services/api/upload";
 import { APIUrl } from "../../utils";
 
@@ -88,6 +89,12 @@ export default function UploadFiles({ ...props }) {
           openAlert("warning", "Selecione uma imagem!");
         }
         response = await UploadProdutoIcon(props.id, acceptedFiles[0]);
+      }
+      if (props.type === "estabelecimento") {
+        if (acceptedFiles.length === 0) {
+          openAlert("warning", "Selecione uma imagem!");
+        }
+        response = await UploadEstabelecimentoIcon(acceptedFiles[0]);
       }
 
       if (response === null || !response.data.sucesso) {

@@ -242,11 +242,14 @@ export default function ListarProdutoView() {
   }
 
   async function excluirProduto(produtoId, index) {
+    index = index + page * rowsPerPage;
     console.log(produtoId, index);
     setDialogOpen(true);
   }
 
   async function inativarProduto(produtoId, status, index) {
+    index = index + page * rowsPerPage;
+
     productsBackup[index].status = !productsBackup[index].status;
 
     setProducts(

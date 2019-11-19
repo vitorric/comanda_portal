@@ -12,12 +12,8 @@ import Toolbar from "@material-ui/core/Toolbar";
 import Typography from "@material-ui/core/Typography";
 import Paper from "@material-ui/core/Paper";
 import Tooltip from "@material-ui/core/Tooltip";
-import DeleteIcon from "@material-ui/icons/Delete";
-import AddIcon from "@material-ui/icons/Add";
 import Fab from "@material-ui/core/Fab";
-import Icon from "@material-ui/core/Icon";
-import VisibilityIcon from "@material-ui/icons/Visibility";
-import VisibilityOffIcon from "@material-ui/icons/VisibilityOff";
+import CheckCircleIcon from "@material-ui/icons/CheckCircle";
 import TextField from "@material-ui/core/TextField";
 import Grid from "@material-ui/core/Grid";
 import Chip from "@material-ui/core/Chip";
@@ -28,11 +24,10 @@ import Dialog from "@material-ui/core/Dialog";
 import DialogActions from "@material-ui/core/DialogActions";
 import DialogTitle from "@material-ui/core/DialogTitle";
 
-import { Link } from "react-router-dom";
 import {
-  ListarDesafios,
-  AlterarDesafioStatus
-} from "../../../services/api/desafios";
+  ListarPremiosCompras,
+  AlterarStatusEntrega
+} from "../../../services/api/premioCompras";
 
 function desc(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -62,25 +57,42 @@ function getSorting(order, orderBy) {
 
 const headRows = [
   {
-    id: "nome",
+    id: "codigoAmigel",
     numeric: false,
     disablePadding: false,
-    label: "Nome"
+    label: "Código Amigável"
   },
   {
-    id: "emGrupo",
+    id: "nomeCliente",
     numeric: false,
     disablePadding: false,
-    label: "É em grupo?"
+    label: "Cliente"
   },
-  { id: "premio", numeric: false, disablePadding: false, label: "Prêmio" },
   {
-    id: "tempoDuracao",
+    id: "nomeProduto",
     numeric: false,
     disablePadding: false,
-    label: "Disponível até"
+    label: "Produto"
   },
-  { id: "status", numeric: false, disablePadding: false, label: "Status" },
+  {
+    id: "dataAdquirida",
+    numeric: false,
+    disablePadding: false,
+    label: "Data Adquirida"
+  },
+  {
+    id: "dataRetirada",
+    numeric: false,
+    disablePadding: false,
+    label: "Data Retirada"
+  },
+  {
+    id: "modoObtido",
+    numeric: false,
+    disablePadding: false,
+    label: "Modo Obtido"
+  },
+  { id: "entregue", numeric: false, disablePadding: false, label: "Entregue" },
   { id: "acao", numeric: false, disablePadding: false, label: "Ação" }
 ];
 
@@ -154,7 +166,7 @@ const EnhancedTableToolbar = () => {
     <Toolbar>
       <div className={classes.title}>
         <Typography variant="h6" id="tableTitle">
-          Desafios
+          PRÊMIOS E COMPRAS
         </Typography>
       </div>
       <div className={classes.spacer} />
@@ -186,7 +198,7 @@ const useStyles = makeStyles(theme => ({
   }
 }));
 
-export default function ListarDesafiosView() {
+export default function ListarPremioCompraView() {
   const classes = useStyles();
   const [order, setOrder] = React.useState("asc");
   const [orderBy, setOrderBy] = React.useState("nome");
@@ -209,14 +221,14 @@ export default function ListarDesafiosView() {
   }
 
   useEffect(() => {
-    const getData = async () => {
-      const response = await ListarDesafios();
+    const getAllData = async () => {
+      const response = await ListarPremiosCompras();
       setData(response.data.retorno);
       setDataBackup(response.data.retorno);
       setEmptyRows(response.data.retorno.length);
     };
 
-    getData();
+    getAllData();
   }, []);
 
   function handleChangePage(event, newPage) {
@@ -233,13 +245,61 @@ export default function ListarDesafiosView() {
 
     setData(
       dataBackup.filter(item => {
-        return item.nome.toLowerCase().includes(filter.toLowerCase());
+        return (
+          item.chaveUnica.toLowerCase().includes(filter.toLowerCase()) ||
+          item.produto.nome.toLowerCase().includes(filter.toLowerCase()) ||
+          item.produto.codigo
+            .toString()
+            .toLowerCase()
+            .includes(filter.toLowerCase()) ||
+          item.cliente.codigo
+            .toString()
+            .toLowerCase()
+            .includes(filter.toLowerCase()) ||
+          item.cliente.nome.toLowerCase().includes(filter.toLowerCase())
+        );
       })
     );
-    openAlert("warning", "test");
   };
+
   function handleCloseAlert() {
     setOptionsAlert({ ...optionsAlert, open: false });
+  }
+
+  const confirmarEntrega = (historicoCompraId, index) => async e => {
+    try {
+      e.preventDefault();
+
+      index = index + page * rowsPerPage;
+
+      const response = await AlterarStatusEntrega({
+        historicoCompraId: historicoCompraId
+      });
+
+      if (response.data.sucesso) {
+        dataBackup[index].infoEntrega.jaEntregue = true;
+        dataBackup[index].infoEntrega.dataEntrega =
+          response.data.retorno.infoEntrega.dataEntrega;
+
+        setData(
+          dataBackup.filter(item => {
+            return item;
+          })
+        );
+
+        console.log(response.data);
+        openAlert("success", "Registro alterado com sucesso!");
+      } else {
+        openAlert("warning", response.data.mensagem);
+      }
+    } catch (err) {
+      openAlert("error", "Solicitação inválida, tente novamente!");
+      console.log("confirmarEntrega:", err);
+    }
+  };
+
+  function handleDialogClose() {
+    setDialogOpen(false);
   }
 
   function openAlert(variant, message) {
@@ -248,41 +308,6 @@ export default function ListarDesafiosView() {
       message: message,
       open: true
     });
-  }
-
-  async function excluirItem(dataId, index) {
-    index = index + page * rowsPerPage;
-    console.log(dataId, index);
-    setDialogOpen(true);
-  }
-
-  async function inativarItem(dataId) {
-    const index = dataBackup.findIndex(
-      x => x._id.toString() === dataId.toString()
-    );
-
-    dataBackup[index].status = dataBackup[index].status === 1 ? 0 : 1;
-
-    const response = await AlterarDesafioStatus({
-      desafioId: dataId,
-      status: dataBackup[index].status
-    });
-
-    if (response.data.sucesso) {
-      openAlert("success", "Registro alterado com sucesso!");
-
-      setData(
-        dataBackup.filter(item => {
-          return item;
-        })
-      );
-    } else {
-      openAlert("warning", response.data.mensagem);
-    }
-  }
-
-  function handleDialogClose() {
-    setDialogOpen(false);
   }
 
   return (
@@ -308,10 +333,10 @@ export default function ListarDesafiosView() {
           <Grid item xs={8}>
             <TextField
               id="busca"
-              label="Buscar desafio"
+              label="Buscar prêmio ou compra"
               style={{ margin: 8 }}
-              placeholder="Buscar desafio"
-              helperText="Digite o nome do desafio"
+              placeholder="Buscar prêmio ou compra"
+              helperText="Digite o código amigável da compra, nome ou código do produto/cliente"
               margin="normal"
               fullWidth
               onChange={searchGrid()}
@@ -319,15 +344,6 @@ export default function ListarDesafiosView() {
                 shrink: true
               }}
             />
-          </Grid>
-          <Grid item xs={4}>
-            <Link to={`/admin/cadastrar/desafio`}>
-              <Tooltip title="Adicionar" className={classes.addButton}>
-                <Fab color="primary" size="medium">
-                  <AddIcon />
-                </Fab>
-              </Tooltip>
-            </Link>
           </Grid>
         </Grid>
         <div className={classes.tableWrapper}>
@@ -345,64 +361,56 @@ export default function ListarDesafiosView() {
             <TableBody>
               {stableSort(data, getSorting(order, orderBy))
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                .map((dataItem, index) => {
+                .map((data, index) => {
                   const labelId = `enhanced-table-checkbox-${index}`;
 
                   return (
-                    <TableRow hover tabIndex={-1} key={dataItem._id}>
-                      <TableCell component="th" id={labelId} scope="row">
-                        {dataItem.nome}
+                    <TableRow hover tabIndex={-1} key={data._id}>
+                      <TableCell align="left">{data.chaveUnica}</TableCell>
+                      <TableCell
+                        component="th"
+                        id={labelId}
+                        scope="row"
+                        padding="none"
+                      >
+                        {data.cliente.chaveAmigavel + " - " + data.cliente.nome}
                       </TableCell>
-                      <TableCell>{dataItem.emGrupo ? "Sim" : "Não"}</TableCell>
-                      <TableCell>
-                        {dataItem.premio.produto
-                          ? `${dataItem.premio.quantidade}x - ${dataItem.premio.produto.nome}`
-                          : `${dataItem.premio.quantidade} CPGold`}
+                      <TableCell align="left">
+                        {data.produto.codigo +
+                          " - " +
+                          data.quantidade +
+                          "x " +
+                          data.produto.nome}
                       </TableCell>
-                      <TableCell>{dataItem.tempoDuracao}</TableCell>
+                      <TableCell align="left">{data.createdAt}</TableCell>
+                      <TableCell align="left">
+                        {data.infoEntrega.dataEntrega}
+                      </TableCell>
+                      <TableCell align="left">{data.modoObtido}</TableCell>
                       <TableCell>
                         <Chip
                           color={
-                            dataItem.status === 1 ? "primary" : "secondary"
+                            data.infoEntrega.jaEntregue
+                              ? "primary"
+                              : "secondary"
                           }
-                          label={dataItem.status === 1 ? "Ativo" : "Inativo"}
+                          label={data.infoEntrega.jaEntregue ? "Sim" : "Não"}
                         />
                       </TableCell>
                       <TableCell>
-                        <Link
-                          to={`/admin/cadastrar/desafio/${dataItem._id}`}
-                          className={classes.margin}
-                        >
-                          <Tooltip title="Editar">
+                        {data.infoEntrega.jaEntregue ? (
+                          ""
+                        ) : (
+                          <Tooltip
+                            title="Confirmar Entrega"
+                            onClick={confirmarEntrega(data._id, index)}
+                            className={classes.margin}
+                          >
                             <Fab color="primary" size="small">
-                              <Icon>edit_icon</Icon>
+                              <CheckCircleIcon />
                             </Fab>
                           </Tooltip>
-                        </Link>
-                        <Tooltip
-                          title={
-                            dataItem.status === true ? "Inativar" : "Ativar"
-                          }
-                          onClick={() => inativarItem(dataItem._id)}
-                          className={classes.margin}
-                        >
-                          <Fab color="default" size="small">
-                            {dataItem.status ? (
-                              <VisibilityIcon />
-                            ) : (
-                              <VisibilityOffIcon />
-                            )}
-                          </Fab>
-                        </Tooltip>
-                        <Tooltip
-                          title="Excluir"
-                          onClick={() => excluirItem(dataItem._id, index)}
-                          className={classes.margin}
-                        >
-                          <Fab color="secondary" size="small">
-                            <DeleteIcon />
-                          </Fab>
-                        </Tooltip>
+                        )}
                       </TableCell>
                     </TableRow>
                   );
