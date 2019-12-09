@@ -739,7 +739,8 @@ export default function CadastrarComandaView({ ...props }) {
                             </Tooltip>
                           ) : (
                             ""
-                          )}{" "}
+                          )}
+                          {/* {" "}
                           {values.aberta ? (
                             <Tooltip
                               title="Remover 1"
@@ -752,7 +753,7 @@ export default function CadastrarComandaView({ ...props }) {
                             </Tooltip>
                           ) : (
                             ""
-                          )}
+                          )} */}
                         </TableCell>
                       </TableRow>
                     ))}
