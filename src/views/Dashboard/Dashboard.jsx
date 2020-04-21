@@ -29,7 +29,7 @@ export default function Dashboard() {
   useEffect(() => {
     const obterEstabelecimentoDashboard = async () => {
       const response = await ObterEstabelecimentoDashboard();
-
+      console.log(response.data);
       response.data.retorno.tipo = {
         label: response.data.retorno.tipo,
         value: response.data.retorno.tipo
