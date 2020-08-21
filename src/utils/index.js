@@ -5,4 +5,3 @@ export const FormatarDinheiro = num => {
 };
 
 export const APIUrl = () => "http://localhost:3000/";
-//export const APIUrl = () => "http://93.188.164.122:3000/";
